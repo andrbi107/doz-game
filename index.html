@@ -71,30 +71,46 @@
                         </button>
                     </div>
                     <div class="menu-row">
+                        <button class="btn btn-secondary" data-action="go-tournament">
+                            <span class="btn-icon">🥇</span>
+                            <span class="btn-text">تورنمنت</span>
+                        </button>
+                        <button class="btn btn-secondary" data-action="go-league">
+                            <span class="btn-icon">📅</span>
+                            <span class="btn-text">لیگ فصلی</span>
+                        </button>
+                    </div>
+                    <div class="menu-row">
+                        <button class="btn btn-secondary" data-action="go-spectate">
+                            <span class="btn-icon">👁️</span>
+                            <span class="btn-text">تماشا</span>
+                        </button>
                         <button class="btn btn-secondary" data-action="go-stats">
                             <span class="btn-icon">📊</span>
                             <span class="btn-text">آمار</span>
                         </button>
+                    </div>
+                    <div class="menu-row">
                         <button class="btn btn-secondary" data-action="go-achievements">
                             <span class="btn-icon">🏅</span>
                             <span class="btn-text">دستاوردها</span>
                             <span class="badge" id="achievementBadge" style="display:none">0</span>
                         </button>
-                    </div>
-                    <div class="menu-row">
                         <button class="btn btn-secondary" data-action="go-replay" id="replayMenuBtn" disabled>
                             <span class="btn-icon">⏮</span>
                             <span class="btn-text">بازپخش</span>
                         </button>
+                    </div>
+                    <div class="menu-row">
                         <button class="btn btn-secondary" data-action="go-settings">
                             <span class="btn-icon">⚙</span>
                             <span class="btn-text">تنظیمات</span>
                         </button>
+                        <button class="btn btn-secondary" data-action="go-help">
+                            <span class="btn-icon">؟</span>
+                            <span class="btn-text">راهنما</span>
+                        </button>
                     </div>
-                    <button class="btn btn-secondary btn-large" data-action="go-help">
-                        <span class="btn-icon">؟</span>
-                        <span class="btn-text">راهنما</span>
-                    </button>
                 </div>
 
                 <!-- XP/Level bar (v3) -->
@@ -112,7 +128,7 @@
                 </div>
 
                 <div class="home-footer">
-                    <span class="version"><bdi>نسخه ۵.۰.۰</bdi></span>
+                    <span class="version"><bdi>نسخه ۶.۰.۰</bdi></span>
                     <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم" title="تغییر تم">
                         <span class="theme-icon-light">☀</span>
                         <span class="theme-icon-dark">☾</span>
@@ -371,6 +387,7 @@
                 <div class="modal-actions">
                     <button class="btn btn-secondary" data-action="go-home">منوی اصلی</button>
                     <button class="btn btn-ghost" data-action="share-replay">🔗 اشتراک‌گذاری</button>
+                    <button class="btn btn-ghost" data-action="analyze-game">📊 تحلیل</button>
                     <button class="btn btn-primary" data-action="rematch">بازی دوباره</button>
                 </div>
             </div>
@@ -991,6 +1008,113 @@ p>
                 </div>
             </div>
         </section>
+
+        <!-- ============ TOURNAMENT SCREEN ============ -->
+        <section class="screen" id="tournamentScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">تورنمنت</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="tournament-container" id="tournamentContainer">
+                <!-- Will be filled dynamically -->
+            </div>
+        </section>
+
+        <!-- ============ LEAGUE SCREEN ============ -->
+        <section class="screen" id="leagueScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">لیگ فصلی</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="league-container" id="leagueContainer">
+                <!-- Will be filled dynamically -->
+            </div>
+        </section>
+
+        <!-- ============ SPECTATE SCREEN ============ -->
+        <section class="screen" id="spectateScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">تماشای بازی‌ها</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="spectate-container">
+                <div id="spectateGamesList" class="spectate-list">
+                    <p class="empty-state">در حال بارگذاری...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ SPECTATE GAME VIEWER ============ -->
+        <section class="screen" id="spectateViewerScreen">
+            <div class="screen-header game-header">
+                <button class="btn-icon-back" data-action="leave-spectate" aria-label="خروج">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title" id="spectateViewerTitle">تماشا</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="score-bar">
+                <div class="score-card score-card-x" id="spectateScoreCardX">
+                    <div class="score-mark-row">
+                        <span class="score-mark">×</span>
+                    </div>
+                    <div class="score-name" id="spectateScoreNameX">—</div>
+                </div>
+                <div class="score-divider">
+                    <div class="round-info">
+                        <span class="round-label">👁️ <span id="spectatorCount">۰</span></span>
+                    </div>
+                </div>
+                <div class="score-card score-card-o" id="spectateScoreCardO">
+                    <div class="score-mark-row">
+                        <span class="score-mark">○</span>
+                    </div>
+                    <div class="score-name" id="spectateScoreNameO">—</div>
+                </div>
+            </div>
+
+            <div class="board-wrap">
+                <div class="board size-3" id="spectateBoard">
+                    <!-- Cells created dynamically -->
+                </div>
+                <div class="winning-line" id="spectateWinningLine"></div>
+            </div>
+
+            <div class="emote-bar">
+                <button class="emote-btn" data-spectate-emote="👏">👏</button>
+                <button class="emote-btn" data-spectate-emote="🔥">🔥</button>
+                <button class="emote-btn" data-spectate-emote="😮">😮</button>
+                <button class="emote-btn" data-spectate-emote="🎉">🎉</button>
+            </div>
+
+            <div class="emote-display" id="spectateEmoteDisplay"></div>
+        </section>
+
+        <!-- ============ ANALYSIS MODAL ============ -->
+        <div class="modal-overlay" id="analysisModal">
+            <div class="modal modal-large">
+                <h2 class="modal-title-small">📊 تحلیل بازی</h2>
+                <div class="analysis-summary" id="analysisSummary"></div>
+                <div class="analysis-grade" id="analysisGrade"></div>
+                <div class="analysis-insights" id="analysisInsights"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-action="close-analysis">بستن</button>
+                </div>
+            </div>
+        </div>
 
     </div>
 

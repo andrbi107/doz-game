@@ -15,6 +15,10 @@ const GameRoom = require('./gameroom');
 const Presence = require('./presence');
 const ELO = require('./elo');
 const Friends = require('./friends');
+const Tournament = require('./tournament');
+const League = require('./league');
+const Spectator = require('./spectator');
+const Analysis = require('./analysis');
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'doz-dev-secret-change-in-prod';
@@ -57,6 +61,11 @@ app.get('/api/leaderboard', (req, res) => {
 
 // Friends routes (v5)
 const friends = Friends.create(store);
+
+// Tournament, League, Spectator (v6)
+const tournament = Tournament.create(io, store, presence, GameRoom, ELO);
+const league = League.create(io, store);
+const spectator = Spectator.create(io);
 
 // Auth middleware for friend routes
 function authMiddleware(req, res, next) {
@@ -115,6 +124,62 @@ app.post('/api/friends/block/:username', authMiddleware, (req, res) => {
 app.get('/api/users/search', authMiddleware, (req, res) => {
     const q = req.query.q || '';
     res.json(friends.searchUsers(q));
+});
+
+/* ---------- Tournament routes (v6) ---------- */
+
+app.get('/api/tournament', (req, res) => {
+    res.json(tournament.getInfo());
+});
+
+app.get('/api/tournament/participants', (req, res) => {
+    res.json(tournament.getParticipants());
+});
+
+app.post('/api/tournament/signup', authMiddleware, (req, res) => {
+    const result = tournament.signup(req.username);
+    if (result.ok) res.json(result);
+    else res.status(400).json({ error: result.error });
+});
+
+app.post('/api/tournament/start', authMiddleware, (req, res) => {
+    // Only admin could start; for demo, anyone can
+    const result = tournament.startTournament();
+    if (result.ok) res.json(result);
+    else res.status(400).json({ error: result.error });
+});
+
+/* ---------- League routes (v6) ---------- */
+
+app.get('/api/league/season', (req, res) => {
+    res.json(league.getSeasonInfo());
+});
+
+app.get('/api/league/me', authMiddleware, (req, res) => {
+    const stats = league.getPlayerSeason(req.username);
+    if (!stats) res.json({ seasonElo: 1200, wins: 0, losses: 0, draws: 0, gamesPlayed: 0, tier: 'برنز', tierIcon: '🥉', rankInTier: 0, tierSize: 0 });
+    else res.json(stats);
+});
+
+app.get('/api/leaderboard/:tier', (req, res) => {
+    res.json(league.getTierLeaderboard(req.params.tier));
+});
+
+/* ---------- Spectator routes (v6) ---------- */
+
+app.get('/api/spectate/games', (req, res) => {
+    res.json(spectator.getAvailableGames());
+});
+
+/* ---------- Analysis routes (v6) ---------- */
+
+app.post('/api/analysis', (req, res) => {
+    const { moves, boardSize } = req.body;
+    if (!moves || !Array.isArray(moves)) {
+        return res.status(400).json({ error: 'moves array required' });
+    }
+    const result = Analysis.analyzeGame(moves, boardSize || 3);
+    res.json(result);
 });
 
 // HTTP server
@@ -222,6 +287,27 @@ io.on('connection', (socket) => {
         if (room) room.broadcastEmote(socket, emote);
     });
 
+    // === Spectator (v6) ===
+    socket.on('spectate:join', (data, ack) => {
+        const { roomId } = data;
+        const result = spectator.addSpectator(socket, roomId);
+        if (ack) ack(result);
+    });
+
+    socket.on('spectate:leave', (data) => {
+        spectator.removeSpectator(socket, data.roomId);
+    });
+
+    socket.on('spectate:emote', (data) => {
+        spectator.broadcastSpectatorEmote(data.roomId, socket.username, data.emote);
+    });
+
+    // === Tournament (v6) ===
+    socket.on('tournament:signup', (data, ack) => {
+        const result = tournament.signup(socket.username);
+        if (ack) ack(result);
+    });
+
     // === Disconnect ===
     socket.on('disconnect', () => {
         console.log(`[Disconnect] ${socket.username} disconnected`);
@@ -233,6 +319,8 @@ io.on('connection', (socket) => {
                 room.handleDisconnect(socket);
             }
         }
+        // Remove from spectator rooms
+        // (socket.io auto-cleans rooms on disconnect)
     });
 });
 
@@ -247,16 +335,28 @@ GameRoom.onGameEnd = (room, winner, loser, isDraw) => {
     const loserUser = store.users.get(loser.userId);
     if (!winnerUser || !loserUser) return;
 
+    let eloChange = 0;
     if (isDraw) {
         winnerUser.draws = (winnerUser.draws || 0) + 1;
         loserUser.draws = (loserUser.draws || 0) + 1;
+        // Record in league (v6)
+        league.recordGame(winnerUser.username, 'draw', 0);
+        league.recordGame(loserUser.username, 'draw', 0);
     } else {
-        const { newWinnerElo, newLoserElo } = ELO.update(winnerUser.elo, loserUser.elo);
-        winnerUser.elo = newWinnerElo;
-        loserUser.elo = newLoserElo;
+        const result = ELO.update(winnerUser.elo, loserUser.elo);
+        eloChange = result.change;
+        winnerUser.elo = result.newWinnerElo;
+        loserUser.elo = result.newLoserElo;
         winnerUser.wins = (winnerUser.wins || 0) + 1;
         loserUser.losses = (loserUser.losses || 0) + 1;
+        // Record in league (v6)
+        league.recordGame(winnerUser.username, 'win', eloChange);
+        league.recordGame(loserUser.username, 'loss', eloChange);
     }
+
+    // Notify spectator room (v6)
+    spectator.finishGame(room.id, isDraw ? null : room.winner, room.line || null);
+
     // Cleanup room after delay
     setTimeout(() => gameRooms.delete(room.id), 60000);
 };

@@ -200,6 +200,24 @@ const Online = (function () {
             if (handlers.onPresenceUpdate) handlers.onPresenceUpdate(data);
         });
 
+        // Spectate events (v6)
+        socket.on('spectate:state', (data) => {
+            if (window.OnlineUI) OnlineUI.handleSpectateState(data);
+        });
+        socket.on('spectate:move', (data) => {
+            if (window.OnlineUI) OnlineUI.handleSpectateMove(data);
+        });
+        socket.on('spectate:end', (data) => {
+            if (window.OnlineUI) OnlineUI.handleSpectateEnd(data);
+        });
+        socket.on('spectate:spectator-count', (data) => {
+            const el = document.getElementById('spectatorCount');
+            if (el) el.textContent = data.count;
+        });
+        socket.on('spectate:emote', (data) => {
+            if (window.OnlineUI) OnlineUI.handleSpectateEmote(data);
+        });
+
         return socket;
     }
 
@@ -327,6 +345,76 @@ const Online = (function () {
         return resp.json();
     }
 
+    /* ---------- Tournament (v6) ---------- */
+
+    async function getTournament() {
+        const resp = await fetch(getServerUrl() + '/api/tournament');
+        return resp.json();
+    }
+
+    async function getTournamentParticipants() {
+        const resp = await fetch(getServerUrl() + '/api/tournament/participants');
+        return resp.json();
+    }
+
+    async function signupTournament() {
+        return apiPost('/api/tournament/signup');
+    }
+
+    async function startTournament() {
+        return apiPost('/api/tournament/start');
+    }
+
+    /* ---------- League (v6) ---------- */
+
+    async function getLeagueSeason() {
+        const resp = await fetch(getServerUrl() + '/api/league/season');
+        return resp.json();
+    }
+
+    async function getMyLeagueStats() {
+        return apiGet('/api/league/me');
+    }
+
+    async function getTierLeaderboard(tier) {
+        const resp = await fetch(getServerUrl() + '/api/leaderboard/' + encodeURIComponent(tier));
+        return resp.json();
+    }
+
+    /* ---------- Spectator (v6) ---------- */
+
+    async function getSpectateGames() {
+        const resp = await fetch(getServerUrl() + '/api/spectate/games');
+        return resp.json();
+    }
+
+    function spectateJoin(roomId) {
+        if (!socket) return;
+        socket.emit('spectate:join', { roomId });
+    }
+
+    function spectateLeave(roomId) {
+        if (!socket) return;
+        socket.emit('spectate:leave', { roomId });
+    }
+
+    function spectateEmote(roomId, emote) {
+        if (!socket) return;
+        socket.emit('spectate:emote', { roomId, emote });
+    }
+
+    /* ---------- Analysis (v6) ---------- */
+
+    async function analyzeGame(moves, boardSize = 3) {
+        const resp = await fetch(getServerUrl() + '/api/analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ moves, boardSize }),
+        });
+        if (!resp.ok) throw new Error('Analysis failed');
+        return resp.json();
+    }
+
     /* ---------- Set handlers ---------- */
 
     function on(event, handler) {
@@ -360,6 +448,19 @@ const Online = (function () {
         searchUsers,
         getLeaderboard,
         getProfile,
+        // v6
+        getTournament,
+        getTournamentParticipants,
+        signupTournament,
+        startTournament,
+        getLeagueSeason,
+        getMyLeagueStats,
+        getTierLeaderboard,
+        getSpectateGames,
+        spectateJoin,
+        spectateLeave,
+        spectateEmote,
+        analyzeGame,
         on,
         getServerUrl,
         setServerUrl,

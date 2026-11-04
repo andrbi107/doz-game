@@ -22,6 +22,10 @@ const UI = (function () {
         friends: $('#friendsScreen'),
         profile: $('#profileScreen'),
         leaderboard: $('#leaderboardScreen'),
+        tournament: $('#tournamentScreen'),
+        league: $('#leagueScreen'),
+        spectate: $('#spectateScreen'),
+        spectateViewer: $('#spectateViewerScreen'),
     };
 
     const els = {

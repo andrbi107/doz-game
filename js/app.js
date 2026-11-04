@@ -394,6 +394,13 @@
             });
         }
 
+        // Spectate emote buttons (v6)
+        document.querySelectorAll('[data-spectate-emote]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                OnlineUI.sendSpectateEmote(btn.dataset.spectateEmote);
+            });
+        });
+
         // Save state on page hide (for auto-resume)
         window.addEventListener('beforeunload', saveCurrentGameState);
         document.addEventListener('visibilitychange', () => {
@@ -457,6 +464,16 @@
             case 'reject-friend':     OnlineUI.rejectFriend(target.dataset.username); break;
             case 'remove-friend':     OnlineUI.removeFriend(target.dataset.username); break;
             case 'view-profile':      OnlineUI.showProfile(target.dataset.username); break;
+
+            // Tournament, League, Spectate, Analysis (v6)
+            case 'go-tournament':     OnlineUI.showTournament(); break;
+            case 'go-league':        OnlineUI.showLeague(); break;
+            case 'go-spectate':       OnlineUI.showSpectate(); break;
+            case 'signup-tournament': OnlineUI.signupTournament(); break;
+            case 'start-tournament':  OnlineUI.startTournament(); break;
+            case 'leave-spectate':    OnlineUI.leaveSpectate(); break;
+            case 'analyze-game':      OnlineUI.analyzeCurrentGame(); break;
+            case 'close-analysis':    OnlineUI.closeAnalysis(); break;
 
             case 'undo-move':     undoMove(); break;
             case 'toggle-sound':  toggleSound(); break;

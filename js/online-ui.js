@@ -753,6 +753,416 @@ const OnlineUI = (function () {
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    /* ---------- Tournament screen (v6) ---------- */
+
+    async function showTournament() {
+        UI.showScreen('tournament');
+        const container = $('#tournamentContainer');
+        if (!container) return;
+        container.innerHTML = '<p class="empty-state">در حال بارگذاری...</p>';
+        try {
+            const info = await Online.getTournament();
+            const statusLabels = {
+                signup: 'در حال ثبت‌نام',
+                running: 'در حال اجرا',
+                finished: 'پایان یافته',
+            };
+            const statusColors = {
+                signup: 'var(--success)',
+                running: 'var(--warning)',
+                finished: 'var(--text-muted)',
+            };
+            const me = Online.getUser();
+            const isParticipant = me && info.participantsCount > 0; // simplified
+            container.innerHTML = `
+                <div class="tournament-header">
+                    <div class="tournament-name">${escapeHtml(info.name)}</div>
+                    <div class="tournament-status" style="color:${statusColors[info.status] || '#fff'}">${statusLabels[info.status] || info.status}</div>
+                    ${info.status === 'signup' && me ? `
+                        <div class="tournament-actions">
+                            <button class="btn btn-sm" data-action="signup-tournament">📝 ثبت‌نام</button>
+                        </div>
+                    ` : ''}
+                    ${info.status === 'signup' && me ? `
+                        <div class="tournament-actions">
+                            <button class="btn btn-sm" data-action="start-tournament">🚀 شروع تورنمنت</button>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="tournament-stats">
+                    <div class="tournament-stat-tile">
+                        <div class="tournament-stat-value">${toPersianDigits(info.participantsCount)}</div>
+                        <div class="tournament-stat-label">شرکت‌کننده</div>
+                    </div>
+                    <div class="tournament-stat-tile">
+                        <div class="tournament-stat-value">${info.bracket ? toPersianDigits(info.bracket.length) : '۰'}</div>
+                        <div class="tournament-stat-label">دور</div>
+                    </div>
+                    <div class="tournament-stat-tile">
+                        <div class="tournament-stat-value">${info.currentRound ? toPersianDigits(info.currentRound + 1) : '—'}</div>
+                        <div class="tournament-stat-label">دور فعلی</div>
+                    </div>
+                </div>
+                ${info.champion ? `
+                    <div class="tournament-header" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);margin-bottom:16px">
+                        <div style="font-size:48px">🏆</div>
+                        <div class="tournament-name">قهرمان: ${escapeHtml(info.champion)}</div>
+                    </div>
+                ` : ''}
+                ${info.bracket && info.bracket.length > 0 ? `
+                    <div class="tournament-bracket">
+                        ${info.bracket.map((round, ri) => `
+                            <div class="bracket-round">
+                                <div class="bracket-round-title">دور ${toPersianDigits(ri + 1)}</div>
+                                ${round.map(match => `
+                                    <div class="bracket-match ${match.status === 'bye' ? 'bye' : match.status === 'pending' ? 'pending' : ''} ${match.winner === match.player1 ? 'winner-p1' : match.winner === match.player2 ? 'winner-p2' : ''}">
+                                        <span class="bracket-player ${match.winner === match.player1 ? 'won' : match.winner && match.winner !== match.player1 ? 'lost' : ''}">${match.player1 ? escapeHtml(match.player1) : '—'}</span>
+                                        <span style="color:var(--text-muted)">vs</span>
+                                        <span class="bracket-player ${match.winner === match.player2 ? 'won' : match.winner && match.winner !== match.player2 ? 'lost' : ''}">${match.player2 ? escapeHtml(match.player2) : '—'}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            `;
+        } catch (e) {
+            container.innerHTML = '<p class="empty-state">سرور در دسترس نیست</p>';
+        }
+    }
+
+    async function signupTournament() {
+        try {
+            await Online.signupTournament();
+            if (UI && UI.toast) UI.toast('در تورنمنت ثبت‌نام شدید!');
+            await showTournament();
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
+    async function startTournament() {
+        try {
+            await Online.startTournament();
+            if (UI && UI.toast) UI.toast('تورنمنت شروع شد!');
+            await showTournament();
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
+    /* ---------- League screen (v6) ---------- */
+
+    async function showLeague() {
+        UI.showScreen('league');
+        const container = $('#leagueContainer');
+        if (!container) return;
+        container.innerHTML = '<p class="empty-state">در حال بارگذاری...</p>';
+        try {
+            const [season, myStats] = await Promise.all([
+                Online.getLeagueSeason(),
+                Online.isLoggedIn() ? Online.getMyLeagueStats().catch(() => null) : Promise.resolve(null),
+            ]);
+            const tiers = [
+                { name: 'برنز', icon: '🥉' },
+                { name: 'نقره', icon: '⚪' },
+                { name: 'طلا', icon: '🥇' },
+                { name: 'پلاتین', icon: '🥈' },
+                { name: 'الماس', icon: '💎' },
+            ];
+            container.innerHTML = `
+                <div class="league-header">
+                    <div class="league-season-num">فصل ${toPersianDigits(season.number)}</div>
+                    <div class="league-days-left">${toPersianDigits(season.daysLeft)}</div>
+                    <div class="league-days-label">روز تا پایان فصل</div>
+                </div>
+                ${myStats ? `
+                    <div class="league-my-stats">
+                        <div class="league-my-tier">
+                            <div class="league-tier-icon">${myStats.tierIcon || '🥉'}</div>
+                            <div class="league-tier-info">
+                                <div class="league-tier-name">${escapeHtml(myStats.tier || 'برنز')}</div>
+                                <div class="league-tier-rank">رتبه ${toPersianDigits(myStats.rankInTier)} از ${toPersianDigits(myStats.tierSize)}</div>
+                            </div>
+                        </div>
+                        <div class="league-season-elo">${toPersianDigits(myStats.seasonElo)} ELO</div>
+                        <div class="profile-stats-grid">
+                            <div class="profile-stat-tile">
+                                <div class="profile-stat-value">${toPersianDigits(myStats.wins)}</div>
+                                <div class="profile-stat-label">برد</div>
+                            </div>
+                            <div class="profile-stat-tile">
+                                <div class="profile-stat-value">${toPersianDigits(myStats.losses)}</div>
+                                <div class="profile-stat-label">باخت</div>
+                            </div>
+                            <div class="profile-stat-tile">
+                                <div class="profile-stat-value">${toPersianDigits(myStats.draws)}</div>
+                                <div class="profile-stat-label">مساوی</div>
+                            </div>
+                            <div class="profile-stat-tile">
+                                <div class="profile-stat-value">${toPersianDigits(myStats.gamesPlayed)}</div>
+                                <div class="profile-stat-label">بازی</div>
+                            </div>
+                        </div>
+                    </div>
+                ` : '<p class="empty-state">برای مشاهده آمار فصلی وارد شوید</p>'}
+                <div class="league-tiers-grid">
+                    ${tiers.map(t => `
+                        <div class="league-tier-card ${myStats && myStats.tier === t.name ? 'active' : ''}">
+                            <div class="league-tier-card-icon">${t.icon}</div>
+                            <div class="league-tier-card-name">${t.name}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="tournament-stats">
+                    <div class="tournament-stat-tile">
+                        <div class="tournament-stat-value">${toPersianDigits(season.totalPlayers || 0)}</div>
+                        <div class="tournament-stat-label">بازیکن فعال</div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            container.innerHTML = '<p class="empty-state">سرور در دسترس نیست</p>';
+        }
+    }
+
+    /* ---------- Spectate screen (v6) ---------- */
+
+    let currentSpectateRoom = null;
+
+    async function showSpectate() {
+        UI.showScreen('spectate');
+        const list = $('#spectateGamesList');
+        if (!list) return;
+        list.innerHTML = '<p class="empty-state">در حال بارگذاری...</p>';
+        try {
+            const games = await Online.getSpectateGames();
+            if (games.length === 0) {
+                list.innerHTML = '<p class="empty-state">بازی زنده‌ای برای تماشا وجود ندارد</p>';
+                return;
+            }
+            list.innerHTML = '';
+            games.forEach(g => {
+                const card = document.createElement('div');
+                card.className = 'spectate-game-card';
+                card.innerHTML = `
+                    <div class="spectate-eye">👁️</div>
+                    <div class="spectate-players">
+                        <div class="spectate-vs">${escapeHtml(g.player1)} vs ${escapeHtml(g.player2)}</div>
+                        <div class="spectate-meta">${toPersianDigits(g.spectators)} تماشاچی · حرکت ${toPersianDigits(g.moveCount)}</div>
+                    </div>
+                    <div style="font-size:20px;color:var(--accent)">▶</div>
+                `;
+                card.addEventListener('click', () => joinSpectate(g.roomId, g.player1, g.player2));
+                list.appendChild(card);
+            });
+        } catch (e) {
+            list.innerHTML = '<p class="empty-state">سرور در دسترس نیست</p>';
+        }
+    }
+
+    function joinSpectate(roomId, player1, player2) {
+        currentSpectateRoom = roomId;
+        // Build spectate board
+        const board = $('#spectateBoard');
+        if (board) {
+            board.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                board.appendChild(cell);
+            }
+        }
+        $('#spectateScoreNameX').textContent = player1;
+        $('#spectateScoreNameO').textContent = player2;
+        $('#spectateViewerTitle').textContent = 'تماشا · ' + player1 + ' vs ' + player2;
+        UI.showScreen('spectateViewer');
+        // Join spectator room
+        Online.spectateJoin(roomId);
+        // Setup socket handlers
+        if (socket) {
+            // Already handled in online.js event handlers
+        }
+    }
+
+    function leaveSpectate() {
+        if (currentSpectateRoom) {
+            Online.spectateLeave(currentSpectateRoom);
+            currentSpectateRoom = null;
+        }
+        UI.showScreen('spectate');
+    }
+
+    function handleSpectateState(data) {
+        // Update board
+        const cells = document.querySelectorAll('#spectateBoard .cell');
+        if (!cells.length) return;
+        cells.forEach((cell, i) => {
+            cell.classList.remove('x', 'o', 'filled');
+            const oldMark = cell.querySelector('.mark');
+            if (oldMark) oldMark.remove();
+            const val = data.board[i];
+            if (val) {
+                cell.classList.add(val, 'filled');
+                const mark = document.createElement('span');
+                mark.className = 'mark';
+                mark.textContent = val === 'x' ? '×' : '○';
+                mark.style.animation = 'none';
+                cell.appendChild(mark);
+            }
+        });
+        const countEl = document.getElementById('spectatorCount');
+        if (countEl) countEl.textContent = toPersianDigits(data.spectators || 0);
+        // Update active player
+        document.getElementById('spectateScoreCardX')?.classList.toggle('active', data.currentPlayer === 'x');
+        document.getElementById('spectateScoreCardO')?.classList.toggle('active', data.currentPlayer === 'o');
+    }
+
+    function handleSpectateMove(data) {
+        handleSpectateState(data);
+    }
+
+    function handleSpectateEnd(data) {
+        const cells = document.querySelectorAll('#spectateBoard .cell');
+        if (data.line && cells.length) {
+            data.line.forEach(idx => cells[idx]?.classList.add('winning', data.winner));
+        }
+        const msg = data.winner ? `برنده: ${data.winner === 'x' ? 'X' : 'O'}` : 'مساوی';
+        if (UI && UI.toast) UI.toast('بازی پایان یافت - ' + msg);
+    }
+
+    function handleSpectateEmote(data) {
+        const display = document.getElementById('spectateEmoteDisplay');
+        if (!display) return;
+        const popup = document.createElement('div');
+        popup.className = 'emote-popup';
+        popup.textContent = data.emote;
+        popup.style.left = (Math.random() * 200 - 100) + 'px';
+        display.appendChild(popup);
+        setTimeout(() => popup.remove(), 1800);
+    }
+
+    function sendSpectateEmote(emote) {
+        if (currentSpectateRoom) {
+            Online.spectateEmote(currentSpectateRoom, emote);
+            handleSpectateEmote({ emote });
+        }
+    }
+
+    /* ---------- Analysis (v6) ---------- */
+
+    async function analyzeCurrentGame() {
+        // Get last game from storage
+        const lastGame = Storage.getLastGame();
+        if (!lastGame || !lastGame.moves || lastGame.moves.length === 0) {
+            if (UI && UI.toast) UI.toast('بازی‌ای برای تحلیل وجود ندارد');
+            return;
+        }
+        const modal = $('#analysisModal');
+        const summary = $('#analysisSummary');
+        const gradeEl = $('#analysisGrade');
+        const insights = $('#analysisInsights');
+        if (!modal) return;
+        summary.innerHTML = '<p class="empty-state">در حال تحلیل...</p>';
+        gradeEl.innerHTML = '';
+        insights.innerHTML = '';
+        modal.classList.add('active');
+        try {
+            // Try server analysis first
+            let result;
+            try {
+                result = await Online.analyzeGame(lastGame.moves, lastGame.boardSize || 3);
+            } catch (e) {
+                // Fallback to local analysis using AI module
+                result = localAnalysis(lastGame.moves, lastGame.boardSize || 3);
+            }
+            summary.innerHTML = `
+                <div class="analysis-stat">
+                    <div class="analysis-stat-value">${toPersianDigits(result.totalMoves)}</div>
+                    <div class="analysis-stat-label">کل حرکات</div>
+                </div>
+                <div class="analysis-stat">
+                    <div class="analysis-stat-value" style="color:var(--success)">${toPersianDigits(result.excellentMoves)}</div>
+                    <div class="analysis-stat-label">حرکت عالی</div>
+                </div>
+                <div class="analysis-stat">
+                    <div class="analysis-stat-value" style="color:var(--danger)">${toPersianDigits(result.mistakes)}</div>
+                    <div class="analysis-stat-label">اشتباه</div>
+                </div>
+            `;
+            const gradeClass = 'grade-' + result.grade.toLowerCase().replace('+', '');
+            gradeEl.innerHTML = `
+                <div class="grade-badge ${gradeClass}">${result.grade}</div>
+                <div style="margin-top:8px;color:var(--text-secondary);font-size:13px">دقت: ${toPersianDigits(result.accuracy)}٪</div>
+            `;
+            if (result.insights && result.insights.length > 0) {
+                insights.innerHTML = result.insights.map(ins => `
+                    <div class="insight-item ${ins.type}">
+                        <strong>${escapeHtml(ins.description)}</strong>
+                    </div>
+                `).join('');
+            } else {
+                insights.innerHTML = '<p class="empty-state" style="padding:12px">حرکت قابل توجه‌ای یافت نشد. بازی عالی!</p>';
+            }
+        } catch (e) {
+            summary.innerHTML = '<p class="empty-state">خطا در تحلیل</p>';
+        }
+    }
+
+    /**
+     * Local fallback analysis using the client-side AI module.
+     */
+    function localAnalysis(moves, boardSize) {
+        const winLength = boardSize === 3 ? 3 : 4;
+        let excellent = 0;
+        let mistakes = 0;
+        const insights = [];
+        const board = new Array(boardSize * boardSize).fill(null);
+        moves.forEach((move, i) => {
+            const bestMove = AI.getHint(board.slice(), move.player, boardSize, winLength);
+            if (bestMove === move.index) {
+                excellent++;
+            } else {
+                // Check if missed a win
+                const trialWin = board.slice();
+                trialWin[move.index] = move.player;
+                const winResult = Game.checkWinner(trialWin, boardSize, winLength);
+                if (!winResult.winner && bestMove !== undefined && bestMove !== move.index) {
+                    mistakes++;
+                    insights.push({
+                        moveNumber: i + 1,
+                        player: move.player,
+                        playedIndex: move.index,
+                        bestIndex: bestMove,
+                        type: 'suboptimal',
+                        description: `حرکت ${i + 1}: ${move.player === 'x' ? 'X' : 'O'} بهتر بود خانه ${bestMove + 1} را بازی می‌کرد`,
+                    });
+                }
+            }
+            board[move.index] = move.player;
+        });
+        const accuracy = moves.length > 0 ? Math.round(excellent / moves.length * 100) : 0;
+        let grade = 'F';
+        if (accuracy >= 90) grade = 'A+';
+        else if (accuracy >= 80) grade = 'A';
+        else if (accuracy >= 70) grade = 'B';
+        else if (accuracy >= 60) grade = 'C';
+        else if (accuracy >= 50) grade = 'D';
+        return {
+            totalMoves: moves.length,
+            excellentMoves: excellent,
+            mistakes,
+            accuracy,
+            grade,
+            insights,
+        };
+    }
+
+    function closeAnalysis() {
+        const modal = $('#analysisModal');
+        if (modal) modal.classList.remove('active');
+    }
+
     return {
         init,
         showAuth,
@@ -781,5 +1191,19 @@ const OnlineUI = (function () {
         switchFriendsTab,
         showProfile,
         showLeaderboard,
+        // v6
+        showTournament,
+        signupTournament,
+        startTournament,
+        showLeague,
+        showSpectate,
+        leaveSpectate,
+        sendSpectateEmote,
+        analyzeCurrentGame,
+        closeAnalysis,
+        handleSpectateState,
+        handleSpectateMove,
+        handleSpectateEnd,
+        handleSpectateEmote,
     };
 })();
