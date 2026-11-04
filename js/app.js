@@ -103,6 +103,11 @@
         Achievements.setSoundHook(() => Audio.achievement());
         Achievements.setToastHook((a) => UI.achievementToast(a));
 
+        // Initialize online UI (v4)
+        if (typeof OnlineUI !== 'undefined') {
+            OnlineUI.init();
+        }
+
         // Update achievement badge on home
         updateAchievementBadge();
         // Update XP bar on home
@@ -411,6 +416,22 @@
             case 'next-round':    nextRound(); break;
             case 'rematch':       rematch(); break;
             case 'share-replay':  shareReplay(); break;
+
+            // Online (v4)
+            case 'go-online':         OnlineUI.showOnlineScreen(); break;
+            case 'show-login':        OnlineUI.showAuth('login'); break;
+            case 'show-register':     OnlineUI.showAuth('register'); break;
+            case 'close-auth':        OnlineUI.hideAuth(); break;
+            case 'switch-auth':       OnlineUI.switchAuthMode(); break;
+            case 'submit-auth':       OnlineUI.submitAuth(); break;
+            case 'logout':            OnlineUI.logout(); break;
+            case 'quick-match':       OnlineUI.quickMatch(); break;
+            case 'cancel-match':      OnlineUI.cancelMatch(); break;
+            case 'create-private':    OnlineUI.createPrivate(); break;
+            case 'join-private':      OnlineUI.showJoinPrivate(); break;
+            case 'confirm-join-private': OnlineUI.confirmJoinPrivate(); break;
+            case 'quit-online-game':  OnlineUI.quitOnlineGame(); break;
+            case 'resign-online':     OnlineUI.resignOnline(); break;
 
             case 'undo-move':     undoMove(); break;
             case 'toggle-sound':  toggleSound(); break;

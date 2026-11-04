@@ -54,6 +54,11 @@
                         <span class="btn-icon">▶</span>
                         <span class="btn-text">شروع بازی</span>
                     </button>
+                    <button class="btn btn-secondary btn-large" data-action="go-online" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-color:transparent">
+                        <span class="btn-icon">🌐</span>
+                        <span class="btn-text">بازی آنلاین</span>
+                        <span class="badge" id="onlinePlayersBadge" style="display:none;background:#fff;color:#10b981">۰</span>
+                    </button>
                     <div class="menu-row">
                         <button class="btn btn-secondary" data-action="go-stats">
                             <span class="btn-icon">📊</span>
@@ -96,7 +101,7 @@
                 </div>
 
                 <div class="home-footer">
-                    <span class="version"><bdi>نسخه ۳.۰.۰</bdi></span>
+                    <span class="version"><bdi>نسخه ۴.۰.۰</bdi></span>
                     <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم" title="تغییر تم">
                         <span class="theme-icon-light">☀</span>
                         <span class="theme-icon-dark">☾</span>
@@ -722,12 +727,193 @@ p>
             </div>
         </div>
 
+        <!-- ============ AUTH MODAL ============ -->
+        <div class="modal-overlay" id="authModal">
+            <div class="modal">
+                <h2 class="modal-title-small" id="authTitle">ورود به حساب</h2>
+                <div class="auth-form">
+                    <label class="form-label">نام کاربری</label>
+                    <input type="text" class="form-input" id="authUsername" maxlength="20" placeholder="نام کاربری">
+                    <label class="form-label" style="margin-top:12px">رمز عبور</label>
+                    <input type="password" class="form-input" id="authPassword" maxlength="50" placeholder="رمز عبور">
+                    <p class="auth-error" id="authError" style="display:none"></p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-action="close-auth">انصراف</button>
+                    <button class="btn btn-primary" data-action="submit-auth" id="authSubmitBtn">ورود</button>
+                </div>
+                <div class="auth-switch">
+                    <span id="authSwitchText">حساب ندارید؟</span>
+                    <button class="btn-link" data-action="switch-auth" id="authSwitchBtn">ثبت‌نام</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ ONLINE SCREEN ============ -->
+        <section class="screen" id="onlineScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">بازی آنلاین</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="online-container">
+                <!-- User card -->
+                <div class="online-user-card" id="onlineUserCard" style="display:none">
+                    <div class="online-user-avatar" id="onlineUserAvatar">👤</div>
+                    <div class="online-user-info">
+                        <div class="online-user-name" id="onlineUserName">—</div>
+                        <div class="online-user-elo">
+                            <span class="elo-badge" id="onlineUserTier">🥉</span>
+                            <span id="onlineUserElo">۱۲۰۰</span> ELO
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" data-action="logout">خروج</button>
+                </div>
+
+                <!-- Not logged in -->
+                <div id="onlineNotLoggedIn">
+                    <div class="online-login-prompt">
+                        <div class="login-icon">🔒</div>
+                        <h3>برای بازی آنلاین وارد شوید</h3>
+                        <p>برای رقابت با بازیکنان دیگر و کسب ELO، ابتدا وارد حساب خود شوید یا ثبت‌نام کنید.</p>
+                        <div class="online-buttons">
+                            <button class="btn btn-primary" data-action="show-login">ورود</button>
+                            <button class="btn btn-secondary" data-action="show-register">ثبت‌نام</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logged in: matchmaking -->
+                <div id="onlineMatchmaking" style="display:none">
+                    <div class="online-stats-bar">
+                        <div class="online-stat">
+                            <span class="online-stat-value" id="onlinePlayersCount">۰</span>
+                            <span class="online-stat-label">آنلاین</span>
+                        </div>
+                        <div class="online-stat">
+                            <span class="online-stat-value" id="onlineGamesCount">۰</span>
+                            <span class="online-stat-label">بازی فعال</span>
+                        </div>
+                    </div>
+
+                    <div class="matchmaking-cards">
+                        <button class="mode-card" data-action="quick-match" id="quickMatchBtn">
+                            <div class="mode-card-icon">⚡</div>
+                            <h3 class="mode-card-title">بازی سریع</h3>
+                            <p class="mode-card-desc">با حریفی با ELO نزدیک مچ شوید</p>
+                        </button>
+
+                        <button class="mode-card" data-action="create-private">
+                            <div class="mode-card-icon">🔗</div>
+                            <h3 class="mode-card-title">ساخت اتاق خصوصی</h3>
+                            <p class="mode-card-desc">کد دعوت بسازید و با دوست بازی کنید</p>
+                        </button>
+
+                        <button class="mode-card" data-action="join-private">
+                            <div class="mode-card-icon">🚪</div>
+                            <h3 class="mode-card-title">پیوستن به اتاق</h3>
+                            <p class="mode-card-desc">با کد دعوت به اتاق دوست بپیوندید</p>
+                        </button>
+                    </div>
+
+                    <!-- Matchmaking status -->
+                    <div class="matchmaking-status" id="matchmakingStatus" style="display:none">
+                        <div class="mm-spinner"></div>
+                        <div class="mm-text" id="matchmakingText">در حال جستجوی حریف...</div>
+                        <button class="btn btn-danger btn-sm" data-action="cancel-match">لغو</button>
+                    </div>
+
+                    <!-- Private room code -->
+                    <div class="private-room-info" id="privateRoomInfo" style="display:none">
+                        <div class="private-code-label">کد دعوت اتاق شما:</div>
+                        <div class="private-code" id="privateRoomCode">—</div>
+                        <div class="private-code-hint">این کد را با دوست خود به اشتراک بگذارید</div>
+                    </div>
+
+                    <!-- Join private form -->
+                    <div class="join-private-form" id="joinPrivateForm" style="display:none">
+                        <label class="form-label">کد دعوت</label>
+                        <input type="text" class="form-input" id="joinCodeInput" maxlength="6" placeholder="کد ۶ رقمی">
+                        <button class="btn btn-primary" data-action="confirm-join-private">پیوستن</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ ONLINE GAME SCREEN ============ -->
+        <section class="screen" id="onlineGameScreen">
+            <div class="screen-header game-header">
+                <button class="btn-icon-back" data-action="quit-online-game" aria-label="خروج">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title" id="onlineGameTitle">بازی آنلاین</h2>
+                <button class="btn-icon-back" data-action="resign-online" aria-label="تسلیم">
+                    <span>🏳️</span>
+                </button>
+            </div>
+
+            <div class="score-bar">
+                <div class="score-card score-card-x" id="onlineScoreCardX">
+                    <div class="score-mark-row">
+                        <span class="score-avatar" id="onlineScoreAvatarX">👤</span>
+                        <span class="score-mark">×</span>
+                    </div>
+                    <div class="score-name" id="onlineScoreNameX">بازیکن ۱</div>
+                    <div class="score-value" id="onlineScoreEloX">۱۲۰۰</div>
+                </div>
+                <div class="score-divider">
+                    <div class="round-info">
+                        <span class="round-label">VS</span>
+                    </div>
+                </div>
+                <div class="score-card score-card-o" id="onlineScoreCardO">
+                    <div class="score-mark-row">
+                        <span class="score-avatar" id="onlineScoreAvatarO">👤</span>
+                        <span class="score-mark">○</span>
+                    </div>
+                    <div class="score-name" id="onlineScoreNameO">بازیکن ۲</div>
+                    <div class="score-value" id="onlineScoreEloO">۱۲۰۰</div>
+                </div>
+            </div>
+
+            <div class="turn-row">
+                <div class="turn-indicator" id="onlineTurnIndicator">
+                    <div class="turn-pulse"></div>
+                    <span class="turn-text" id="onlineTurnText">نوبت: <strong>—</strong></span>
+                </div>
+            </div>
+
+            <div class="board-wrap">
+                <div class="board size-3" id="onlineBoard">
+                    <!-- Cells will be created dynamically -->
+                </div>
+                <div class="winning-line" id="onlineWinningLine"></div>
+            </div>
+
+            <!-- Emote bar -->
+            <div class="emote-bar" id="emoteBar">
+                <button class="emote-btn" data-emote="👋">👋</button>
+                <button class="emote-btn" data-emote="👍">👍</button>
+                <button class="emote-btn" data-emote="😅">😅</button>
+                <button class="emote-btn" data-emote="🔥">🔥</button>
+                <button class="emote-btn" data-emote="🎉">🎉</button>
+                <button class="emote-btn" data-emote="GG">GG</button>
+            </div>
+
+            <!-- Floating emote display -->
+            <div class="emote-display" id="emoteDisplay"></div>
+        </section>
+
     </div>
 
     <!-- Toast notifications -->
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/game.js"></script>
@@ -736,6 +922,8 @@ p>
     <script src="js/timer.js"></script>
     <script src="js/replay.js"></script>
     <script src="js/chart.js"></script>
+    <script src="js/online.js"></script>
+    <script src="js/online-ui.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 </body>

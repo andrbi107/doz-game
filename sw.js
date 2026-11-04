@@ -3,13 +3,14 @@
    Cache-first for app shell, network-first for nothing (no API)
    ============================================ */
 
-const CACHE_NAME = 'doz-v3.0.0';
+const CACHE_NAME = 'doz-v4.0.0';
 const APP_SHELL = [
     './',
     './index.html',
     './manifest.json',
     './css/themes.css',
     './css/style.css',
+    './css/components.css',
     './css/animations.css',
     './css/responsive.css',
     './js/storage.js',
@@ -19,8 +20,12 @@ const APP_SHELL = [
     './js/ui.js',
     './js/app.js',
     './js/achievements.js',
+    './js/timer.js',
+    './js/replay.js',
+    './js/chart.js',
+    './js/online.js',
+    './js/online-ui.js',
     './assets/icon.svg',
-    // External fonts (cached for offline use)
     'https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap',
 ];
 

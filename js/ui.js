@@ -17,6 +17,8 @@ const UI = (function () {
         help: $('#helpScreen'),
         achievements: $('#achievementsScreen'),
         replay: $('#replayScreen'),
+        online: $('#onlineScreen'),
+        onlineGame: $('#onlineGameScreen'),
     };
 
     const els = {
