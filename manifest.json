@@ -1,0 +1,53 @@
+{
+    "name": "دوز - بازی کلاسیک مدرن",
+    "short_name": "دوز",
+    "description": "بازی دوز (Tic-Tac-Toe) حرفه‌ای - چند نفره و بازی با هوش مصنوعی",
+    "lang": "fa",
+    "dir": "rtl",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#0f0f1e",
+    "theme_color": "#6366f1",
+    "categories": ["games", "entertainment"],
+    "icons": [
+        {
+            "src": "assets/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "assets/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "assets/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "بازی فوری با ربات",
+            "short_name": "ضد ربات",
+            "description": "شروع سریع بازی در برابر ربات",
+            "url": "./index.html?action=quick-ai"
+        },
+        {
+            "name": "بازی دو نفره",
+            "short_name": "دو نفره",
+            "description": "شروع بازی دو نفره محلی",
+            "url": "./index.html?action=quick-pvp"
+        },
+        {
+            "name": "آمار",
+            "short_name": "آمار",
+            "url": "./index.html?action=stats"
+        }
+    ]
+}

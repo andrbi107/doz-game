@@ -1,5 +1,5 @@
 /* ============================================
-   UI.JS - DOM rendering & interactions for Doz
+   UI.JS - DOM rendering & interactions for Doz v2
    All DOM manipulation lives here.
    ============================================ */
 
@@ -15,11 +15,15 @@ const UI = (function () {
         stats: $('#statsScreen'),
         settings: $('#settingsScreen'),
         help: $('#helpScreen'),
+        achievements: $('#achievementsScreen'),
+        replay: $('#replayScreen'),
     };
 
     const els = {
         // Home
         themeToggle: $('#themeToggle'),
+        achievementBadge: $('#achievementBadge'),
+        replayMenuBtn: $('#replayMenuBtn'),
         // Setup
         player1Name: $('#player1Name'),
         player2Name: $('#player2Name'),
@@ -28,9 +32,15 @@ const UI = (function () {
         winTargetControl: $('#winTargetControl'),
         starterControl: $('#starterControl'),
         starterRow: $('#starterRow'),
+        timerControl: $('#timerControl'),
+        timerRow: $('#timerRow'),
+        avatarXBtn: $('#avatarXBtn'),
+        avatarOBtn: $('#avatarOBtn'),
+        avatarX: $('#avatarX'),
+        avatarO: $('#avatarO'),
         // Game
         board: $('#board'),
-        cells: $$('.cell'),
+        cells: $$('#board .cell'),
         winningLine: $('#winningLine'),
         matchTitle: $('#matchTitle'),
         scoreNameX: $('#scoreNameX'),
@@ -39,10 +49,15 @@ const UI = (function () {
         scoreValueO: $('#scoreValueO'),
         scoreCardX: $('#scoreCardX'),
         scoreCardO: $('#scoreCardO'),
+        scoreAvatarX: $('#scoreAvatarX'),
+        scoreAvatarO: $('#scoreAvatarO'),
         drawsValue: $('#drawsValue'),
         roundNumber: $('#roundNumber'),
         turnText: $('#turnText'),
         turnIndicator: $('#turnIndicator'),
+        moveTimer: $('#moveTimer'),
+        timerValue: $('#timerValue'),
+        timerFgCircle: $('#timerFgCircle'),
         undoBtn: $('#undoBtn'),
         soundBtn: $('#soundBtn'),
         hintsBtn: $('#hintsBtn'),
@@ -60,6 +75,14 @@ const UI = (function () {
         matchEndSubtitle: $('#matchEndSubtitle'),
         matchEndStats: $('#matchEndStats'),
         celebrateConfetti: $('#celebrateConfetti'),
+        avatarPickerModal: $('#avatarPickerModal'),
+        avatarPickerTitle: $('#avatarPickerTitle'),
+        avatarGrid: $('#avatarGrid'),
+        onboardingModal: $('#onboardingModal'),
+        onboardingSlides: $('#onboardingSlides'),
+        onboardingDots: $('#onboardingDots'),
+        onboardingNextBtn: $('#onboardingNextBtn'),
+        resumeModal: $('#resumeModal'),
         // Stats
         statTotalGames: $('#statTotalGames'),
         statWins: $('#statWins'),
@@ -68,6 +91,30 @@ const UI = (function () {
         statWinRate: $('#statWinRate'),
         statStreak: $('#statStreak'),
         leaderboardList: $('#leaderboardList'),
+        donutChart: $('#donutChart'),
+        resultsChart: $('#resultsChart'),
+        diffEasyW: $('#diffEasyW'),
+        diffEasyL: $('#diffEasyL'),
+        diffEasyD: $('#diffEasyD'),
+        diffMediumW: $('#diffMediumW'),
+        diffMediumL: $('#diffMediumL'),
+        diffMediumD: $('#diffMediumD'),
+        diffHardW: $('#diffHardW'),
+        diffHardL: $('#diffHardL'),
+        diffHardD: $('#diffHardD'),
+        importFile: $('#importFile'),
+        // Achievements
+        achUnlocked: $('#achUnlocked'),
+        achTotal: $('#achTotal'),
+        achProgressFill: $('#achProgressFill'),
+        achievementsGrid: $('#achievementsGrid'),
+        // Replay
+        replayBoard: $('#replayBoard'),
+        replayCells: $$('#replayBoard .cell'),
+        replayWinningLine: $('#replayWinningLine'),
+        replayInfo: $('#replayInfo'),
+        replayStep: $('#replayStep'),
+        replayPlayBtn: $('#replayPlayBtn'),
         // Settings
         themeControl: $('#themeControl'),
         boardColorSwatches: $('#boardColorSwatches'),
@@ -76,6 +123,8 @@ const UI = (function () {
         animationsEnabled: $('#animationsEnabled'),
         hapticsEnabled: $('#hapticsEnabled'),
         hintsEnabled: $('#hintsEnabled'),
+        colorBlindMode: $('#colorBlindMode'),
+        highContrastMode: $('#highContrastMode'),
         // Toast
         toastContainer: $('#toastContainer'),
         // Difficulty pills
@@ -85,18 +134,16 @@ const UI = (function () {
     /* ---------- Screen navigation ---------- */
 
     function showScreen(name) {
-        Object.values(screens).forEach(s => s.classList.remove('active'));
+        Object.values(screens).forEach(s => s && s.classList.remove('active'));
         if (screens[name]) screens[name].classList.add('active');
-        // Scroll to top
         if (screens[name]) screens[name].scrollTop = 0;
     }
 
     /* ---------- Board rendering ---------- */
 
-    function renderBoard(board, lastMove = null) {
-        els.cells.forEach((cell, i) => {
+    function renderBoard(board, lastMove = null, cells = els.cells) {
+        cells.forEach((cell, i) => {
             cell.classList.remove('x', 'o', 'filled', 'winning', 'hint');
-            // Remove old mark node
             const oldMark = cell.querySelector('.mark');
             if (oldMark) oldMark.remove();
             const oldNum = cell.querySelector('.cell-number');
@@ -110,14 +157,12 @@ const UI = (function () {
                 mark.textContent = val === 'x' ? '×' : '○';
                 cell.appendChild(mark);
 
-                // Only animate the most recent move
                 if (lastMove !== i) {
                     mark.style.animation = 'none';
                     mark.style.opacity = '1';
                 }
             }
 
-            // Add numpad number helper
             const num = document.createElement('span');
             num.className = 'cell-number';
             num.textContent = Game.cellLabel(i);
@@ -125,38 +170,35 @@ const UI = (function () {
         });
     }
 
-    function highlightWinning(line, winner) {
+    function highlightWinning(line, winner, cells = els.cells, container = els.winningLine) {
         if (!line) return;
         line.forEach(idx => {
-            els.cells[idx].classList.add('winning', winner);
+            if (cells[idx]) cells[idx].classList.add('winning', winner);
         });
-        drawWinningLine(line);
+        drawWinningLine(line, cells, container);
     }
 
-    function drawWinningLine(line) {
-        els.winningLine.innerHTML = '';
+    function drawWinningLine(line, cells = els.cells, container = els.winningLine) {
+        container.innerHTML = '';
         if (!line || line.length < 3) return;
 
-        // Compute SVG line from cell centers
-        const boardRect = els.board.getBoundingClientRect();
-        const cell0 = els.cells[line[0]].getBoundingClientRect();
-        const cell2 = els.cells[line[2]].getBoundingClientRect();
+        const boardRect = cells[0].parentElement.getBoundingClientRect();
+        const cell0 = cells[line[0]].getBoundingClientRect();
+        const cell2 = cells[line[2]].getBoundingClientRect();
 
         const x1 = (cell0.left + cell0.width / 2) - boardRect.left;
         const y1 = (cell0.top + cell0.height / 2) - boardRect.top;
         const x2 = (cell2.left + cell2.width / 2) - boardRect.left;
         const y2 = (cell2.top + cell2.height / 2) - boardRect.top;
 
-        // Use viewBox in 0..100 space
         const w = boardRect.width;
         const h = boardRect.height;
 
-        const svg = `
+        container.innerHTML = `
             <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
                 <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" />
             </svg>
         `;
-        els.winningLine.innerHTML = svg;
     }
 
     function clearWinningLine() {
@@ -171,15 +213,13 @@ const UI = (function () {
         clearHints();
         if (index >= 0 && index < els.cells.length) {
             els.cells[index].classList.add('hint');
-            // Auto-clear after 2 seconds
             setTimeout(clearHints, 2000);
         }
     }
 
     function setBoardDisabled(disabled) {
         els.cells.forEach(c => {
-            if (disabled) c.classList.add('disabled');
-            else c.classList.remove('disabled');
+            c.classList.toggle('disabled', disabled);
         });
     }
 
@@ -197,6 +237,13 @@ const UI = (function () {
         els.scoreNameO.textContent = nameO;
     }
 
+    function updateAvatars(avatarX, avatarO) {
+        els.scoreAvatarX.textContent = avatarX;
+        els.scoreAvatarO.textContent = avatarO;
+        els.avatarX.textContent = avatarX;
+        els.avatarO.textContent = avatarO;
+    }
+
     function setActivePlayer(player) {
         els.scoreCardX.classList.toggle('active', player === 'x');
         els.scoreCardO.classList.toggle('active', player === 'o');
@@ -208,6 +255,23 @@ const UI = (function () {
 
     function setMatchTitle(title) {
         els.matchTitle.textContent = title;
+    }
+
+    /* ---------- Move timer ---------- */
+
+    function showTimer(show) {
+        els.moveTimer.style.display = show ? 'block' : 'none';
+    }
+
+    function updateTimer(seconds, fraction) {
+        els.timerValue.textContent = seconds;
+        const circumference = 100.5; // 2 * PI * 16
+        const offset = circumference * (1 - fraction);
+        els.timerFgCircle.style.strokeDashoffset = offset;
+        // Color states
+        els.moveTimer.classList.remove('warn', 'danger');
+        if (seconds <= 3) els.moveTimer.classList.add('danger');
+        else if (seconds <= 6) els.moveTimer.classList.add('warn');
     }
 
     /* ---------- History ---------- */
@@ -224,11 +288,10 @@ const UI = (function () {
             row.innerHTML = `
                 <span class="move-num">#${i + 1}</span>
                 <span class="move-mark ${m.player}">${m.player === 'x' ? '×' : '○'}</span>
-                <span>خانه ${Game.cellLabel(m.index)} (${m.playerName})</span>
+                <span>خانه ${Game.cellLabel(m.index)} (${escapeHtml(m.playerName || '')})</span>
             `;
             els.historyList.appendChild(row);
         });
-        // Scroll to bottom
         els.historyList.scrollTop = els.historyList.scrollHeight;
     }
 
@@ -275,7 +338,6 @@ const UI = (function () {
             piece.style.transform = `rotate(${Math.random() * 360}deg)`;
             container.appendChild(piece);
         }
-        // Clean up after animation
         setTimeout(() => { container.innerHTML = ''; }, 4000);
     }
 
@@ -289,12 +351,25 @@ const UI = (function () {
         setTimeout(() => t.remove(), duration);
     }
 
+    function achievementToast(achievement) {
+        const t = document.createElement('div');
+        t.className = 'achievement-toast';
+        t.innerHTML = `
+            <div class="ach-toast-icon">${achievement.icon}</div>
+            <div class="ach-toast-text">
+                <div class="ach-toast-label">دستاورد جدید!</div>
+                <div class="ach-toast-title">${escapeHtml(achievement.title)}</div>
+            </div>
+        `;
+        els.toastContainer.appendChild(t);
+        setTimeout(() => t.remove(), 4200);
+    }
+
     /* ---------- Screen-shake / haptics ---------- */
 
     function shake(element = null) {
         const target = element || screens.game;
         target.classList.remove('shake');
-        // Force reflow so animation restarts
         void target.offsetWidth;
         target.classList.add('shake');
     }
@@ -308,21 +383,19 @@ const UI = (function () {
     /* ---------- Settings sync ---------- */
 
     function syncSettingsUI(settings) {
-        // Theme
         $$('#themeControl .seg-btn').forEach(b => {
             b.classList.toggle('active', b.dataset.value === settings.theme);
         });
-        // Accent
         $$('#boardColorSwatches .swatch').forEach(b => {
             b.classList.toggle('active', b.dataset.color === settings.accentColor);
         });
-        // Sound
         els.soundEnabled.checked = settings.soundEnabled;
         els.volumeRange.value = settings.volume;
-        // Gameplay
         els.animationsEnabled.checked = settings.animationsEnabled;
         els.hapticsEnabled.checked = settings.hapticsEnabled;
         els.hintsEnabled.checked = settings.hintsEnabled;
+        els.colorBlindMode.checked = !!settings.colorBlindMode;
+        els.highContrastMode.checked = false; // managed separately
     }
 
     function applyTheme(theme) {
@@ -347,6 +420,14 @@ const UI = (function () {
         document.body.classList.toggle('no-animations', !enabled);
     }
 
+    function applyColorBlindMode(enabled) {
+        document.body.classList.toggle('color-blind-mode', enabled);
+    }
+
+    function applyHighContrast(enabled) {
+        document.body.classList.toggle('high-contrast', enabled);
+    }
+
     /* ---------- Stats ---------- */
 
     function renderStats(stats, leaderboard) {
@@ -360,6 +441,29 @@ const UI = (function () {
         els.statWinRate.textContent = rate + '٪';
         els.statStreak.textContent = stats.bestStreak;
 
+        // Per-difficulty
+        const e = stats.aiEasy || { wins: 0, losses: 0, draws: 0 };
+        const m = stats.aiMedium || { wins: 0, losses: 0, draws: 0 };
+        const h = stats.aiHard || { wins: 0, losses: 0, draws: 0 };
+        els.diffEasyW.textContent = e.wins;
+        els.diffEasyL.textContent = e.losses;
+        els.diffEasyD.textContent = e.draws;
+        els.diffMediumW.textContent = m.wins;
+        els.diffMediumL.textContent = m.losses;
+        els.diffMediumD.textContent = m.draws;
+        els.diffHardW.textContent = h.wins;
+        els.diffHardL.textContent = h.losses;
+        els.diffHardD.textContent = h.draws;
+
+        // Charts
+        if (els.donutChart && typeof Chart !== 'undefined') {
+            Chart.drawDonut(els.donutChart, stats);
+        }
+        if (els.resultsChart && typeof Chart !== 'undefined') {
+            Chart.drawResultsBar(els.resultsChart, stats.recentResults || []);
+        }
+
+        // Leaderboard
         if (!leaderboard || leaderboard.length === 0) {
             els.leaderboardList.innerHTML = '<p class="empty-state">هنوز بازی‌ای ثبت نشده</p>';
             return;
@@ -377,6 +481,163 @@ const UI = (function () {
             els.leaderboardList.appendChild(row);
         });
     }
+
+    /* ---------- Achievements ---------- */
+
+    function renderAchievements(allAchievements) {
+        const unlocked = allAchievements.filter(a => a.unlocked).length;
+        const total = allAchievements.length;
+        els.achUnlocked.textContent = unlocked;
+        els.achTotal.textContent = total;
+        els.achProgressFill.style.width = (total > 0 ? (unlocked / total * 100) : 0) + '%';
+
+        els.achievementsGrid.innerHTML = '';
+        allAchievements.forEach(a => {
+            const card = document.createElement('div');
+            card.className = 'achievement-card' + (a.unlocked ? ' unlocked' : '');
+            const dateStr = a.unlockedAt ? new Date(a.unlockedAt).toLocaleDateString('fa-IR') : '';
+            card.innerHTML = `
+                <div class="achievement-icon">${a.icon}</div>
+                <div class="achievement-title">${escapeHtml(a.title)}</div>
+                <div class="achievement-desc">${escapeHtml(a.description)}</div>
+                ${a.unlocked ? `<div class="achievement-date">${dateStr}</div>` : ''}
+            `;
+            els.achievementsGrid.appendChild(card);
+        });
+    }
+
+    function updateAchievementBadge(count) {
+        if (count > 0) {
+            els.achievementBadge.style.display = 'inline-block';
+            els.achievementBadge.textContent = count;
+        } else {
+            els.achievementBadge.style.display = 'none';
+        }
+    }
+
+    /* ---------- Replay screen ---------- */
+
+    function renderReplayBoard(board, lastMove = null) {
+        renderBoard(board, lastMove, els.replayCells);
+    }
+
+    function setReplayInfo(html) {
+        els.replayInfo.innerHTML = html;
+    }
+
+    function setReplayStep(current, total) {
+        els.replayStep.textContent = `${current} / ${total}`;
+    }
+
+    function setReplayPlaying(playing) {
+        els.replayPlayBtn.innerHTML = playing ? '⏸ توقف' : '▶ پخش';
+    }
+
+    function highlightReplayWin(line, winner) {
+        highlightWinning(line, winner, els.replayCells, els.replayWinningLine);
+    }
+
+    function clearReplayWinningLine() {
+        els.replayWinningLine.innerHTML = '';
+    }
+
+    /* ---------- Avatar picker ---------- */
+
+    function showAvatarPicker(title, current, options, onSelect) {
+        els.avatarPickerTitle.textContent = title;
+        els.avatarGrid.innerHTML = '';
+        options.forEach(emoji => {
+            const btn = document.createElement('button');
+            btn.className = 'avatar-option' + (emoji === current ? ' selected' : '');
+            btn.textContent = emoji;
+            btn.addEventListener('click', () => {
+                $$('#avatarGrid .avatar-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                if (onSelect) onSelect(emoji);
+            });
+            els.avatarGrid.appendChild(btn);
+        });
+        els.avatarPickerModal.classList.add('active');
+    }
+
+    function hideAvatarPicker() {
+        els.avatarPickerModal.classList.remove('active');
+    }
+
+    /* ---------- Onboarding ---------- */
+
+    function showOnboarding() {
+        // Build dots
+        els.onboardingDots.innerHTML = '';
+        const slides = $$('#onboardingSlides .onboarding-slide');
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'onboarding-dot' + (i === 0 ? ' active' : '');
+            dot.dataset.slide = i;
+            els.onboardingDots.appendChild(dot);
+        });
+        goToOnboardingSlide(0);
+        els.onboardingModal.classList.add('active');
+    }
+
+    function hideOnboarding() {
+        els.onboardingModal.classList.remove('active');
+    }
+
+    function goToOnboardingSlide(index) {
+        const slides = $$('#onboardingSlides .onboarding-slide');
+        const dots = $$('#onboardingDots .onboarding-dot');
+        slides.forEach((s, i) => s.classList.toggle('active', i === index));
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
+        els.onboardingNextBtn.textContent = (index === slides.length - 1) ? 'شروع!' : 'بعدی';
+    }
+
+    function nextOnboardingSlide() {
+        const active = $('#onboardingSlides .onboarding-slide.active');
+        if (!active) return false;
+        const idx = parseInt(active.dataset.slide, 10);
+        const slides = $$('#onboardingSlides .onboarding-slide');
+        if (idx >= slides.length - 1) return true; // signal "done"
+        goToOnboardingSlide(idx + 1);
+        return false;
+    }
+
+    /* ---------- Resume modal ---------- */
+
+    function showResumeModal() {
+        els.resumeModal.classList.add('active');
+    }
+
+    function hideResumeModal() {
+        els.resumeModal.classList.remove('active');
+    }
+
+    /* ---------- Install banner ---------- */
+
+    function showInstallBanner(onInstall, onDismiss) {
+        // Remove existing
+        const existing = $('.install-banner');
+        if (existing) existing.remove();
+        const banner = document.createElement('div');
+        banner.className = 'install-banner';
+        banner.innerHTML = `
+            <span class="install-banner-text">نصب بازی روی دستگاه</span>
+            <div class="install-banner-actions">
+                <button class="btn btn-ghost" data-action="dismiss-install">بعداً</button>
+                <button class="btn btn-primary" data-action="accept-install">نصب</button>
+            </div>
+        `;
+        document.body.appendChild(banner);
+        banner.querySelector('[data-action="dismiss-install"]').addEventListener('click', () => {
+            banner.remove();
+            if (onDismiss) onDismiss();
+        });
+        banner.querySelector('[data-action="accept-install"]').addEventListener('click', () => {
+            if (onInstall) onInstall();
+        });
+    }
+
+    /* ---------- Helpers ---------- */
 
     function escapeHtml(s) {
         if (s == null) return '';
@@ -423,6 +684,17 @@ const UI = (function () {
         });
     }
 
+    function getSelectedTimer() {
+        const active = $('#timerControl .seg-btn.active');
+        return active ? parseInt(active.dataset.value, 10) : 0;
+    }
+
+    function setSelectedTimer(value) {
+        $$('#timerControl .seg-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.value, 10) === value);
+        });
+    }
+
     function setAIPlayer2UI(isAI) {
         if (isAI) {
             els.player2Name.value = 'ربات';
@@ -450,6 +722,13 @@ const UI = (function () {
         els.undoBtn.style.opacity = enabled ? '1' : '0.4';
     }
 
+    function setReplayMenuEnabled(enabled) {
+        if (els.replayMenuBtn) {
+            els.replayMenuBtn.disabled = !enabled;
+            els.replayMenuBtn.style.opacity = enabled ? '1' : '0.4';
+        }
+    }
+
     return {
         els,
         screens,
@@ -462,9 +741,12 @@ const UI = (function () {
         setBoardDisabled,
         updateScore,
         updatePlayerNames,
+        updateAvatars,
         setActivePlayer,
         setTurnText,
         setMatchTitle,
+        showTimer,
+        updateTimer,
         renderHistory,
         toggleHistoryPanel,
         showRoundEnd,
@@ -472,22 +754,44 @@ const UI = (function () {
         showMatchEnd,
         hideMatchEnd,
         toast,
+        achievementToast,
         shake,
         vibrate,
         syncSettingsUI,
         applyTheme,
         applyAccentColor,
         applyAnimations,
+        applyColorBlindMode,
+        applyHighContrast,
         renderStats,
+        renderAchievements,
+        updateAchievementBadge,
+        renderReplayBoard,
+        setReplayInfo,
+        setReplayStep,
+        setReplayPlaying,
+        highlightReplayWin,
+        clearReplayWinningLine,
+        showAvatarPicker,
+        hideAvatarPicker,
+        showOnboarding,
+        hideOnboarding,
+        nextOnboardingSlide,
+        showResumeModal,
+        hideResumeModal,
+        showInstallBanner,
         getSelectedDifficulty,
         setSelectedDifficulty,
         getSelectedWinTarget,
         setSelectedWinTarget,
         getSelectedStarter,
         setSelectedStarter,
+        getSelectedTimer,
+        setSelectedTimer,
         setAIPlayer2UI,
         setSoundButtonState,
         setHintsButtonState,
         setUndoEnabled,
+        setReplayMenuEnabled,
     };
 })();

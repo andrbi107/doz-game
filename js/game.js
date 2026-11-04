@@ -75,11 +75,12 @@ const Game = (function () {
     /**
      * Apply a move, returning a NEW board (immutable).
      * Returns null if the move is invalid.
+     * Note: turn-order validation is the caller's responsibility.
      */
     function applyMove(board, index, player) {
         if (index < 0 || index >= TOTAL) return null;
         if (board[index] !== null) return null;
-        if (nextPlayer(board) !== player) return null;
+        if (player !== 'x' && player !== 'o') return null;
         const next = board.slice();
         next[index] = player;
         return next;

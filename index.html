@@ -11,9 +11,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/themes.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><text x='50' y='72' font-size='60' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>د</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="دوز">
 </head>
 <body>
     <!-- Background particles -->
@@ -48,14 +54,27 @@
                         <span class="btn-icon">▶</span>
                         <span class="btn-text">شروع بازی</span>
                     </button>
-                    <button class="btn btn-secondary btn-large" data-action="go-stats">
-                        <span class="btn-icon">📊</span>
-                        <span class="btn-text">آمار</span>
-                    </button>
-                    <button class="btn btn-secondary btn-large" data-action="go-settings">
-                        <span class="btn-icon">⚙</span>
-                        <span class="btn-text">تنظیمات</span>
-                    </button>
+                    <div class="menu-row">
+                        <button class="btn btn-secondary" data-action="go-stats">
+                            <span class="btn-icon">📊</span>
+                            <span class="btn-text">آمار</span>
+                        </button>
+                        <button class="btn btn-secondary" data-action="go-achievements">
+                            <span class="btn-icon">🏅</span>
+                            <span class="btn-text">دستاوردها</span>
+                            <span class="badge" id="achievementBadge" style="display:none">0</span>
+                        </button>
+                    </div>
+                    <div class="menu-row">
+                        <button class="btn btn-secondary" data-action="go-replay" id="replayMenuBtn" disabled>
+                            <span class="btn-icon">⏮</span>
+                            <span class="btn-text">بازپخش</span>
+                        </button>
+                        <button class="btn btn-secondary" data-action="go-settings">
+                            <span class="btn-icon">⚙</span>
+                            <span class="btn-text">تنظیمات</span>
+                        </button>
+                    </div>
                     <button class="btn btn-secondary btn-large" data-action="go-help">
                         <span class="btn-icon">؟</span>
                         <span class="btn-text">راهنما</span>
@@ -63,7 +82,7 @@
                 </div>
 
                 <div class="home-footer">
-                    <span class="version"><bdi>نسخه ۱.۰.۰</bdi></span>
+                    <span class="version"><bdi>نسخه ۲.۰.۰</bdi></span>
                     <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم" title="تغییر تم">
                         <span class="theme-icon-light">☀</span>
                         <span class="theme-icon-dark">☾</span>
@@ -126,7 +145,12 @@
 
             <div class="setup-container">
                 <div class="player-setup-card player-x">
-                    <div class="player-mark mark-x">×</div>
+                    <div class="player-mark-row">
+                        <div class="player-mark mark-x">×</div>
+                        <button class="avatar-btn" id="avatarXBtn" aria-label="انتخاب آواتار X">
+                            <span class="avatar-emoji" id="avatarX">⭐</span>
+                        </button>
+                    </div>
                     <label class="form-label">نام بازیکن اول (X)</label>
                     <input type="text" class="form-input" id="player1Name" maxlength="20" placeholder="بازیکن ۱">
                 </div>
@@ -134,7 +158,12 @@
                 <div class="vs-divider">VS</div>
 
                 <div class="player-setup-card player-o" id="player2SetupCard">
-                    <div class="player-mark mark-o">○</div>
+                    <div class="player-mark-row">
+                        <div class="player-mark mark-o">○</div>
+                        <button class="avatar-btn" id="avatarOBtn" aria-label="انتخاب آواتار O">
+                            <span class="avatar-emoji" id="avatarO">🌙</span>
+                        </button>
+                    </div>
                     <label class="form-label" id="player2Label">نام بازیکن دوم (O)</label>
                     <input type="text" class="form-input" id="player2Name" maxlength="20" placeholder="بازیکن ۲">
                 </div>
@@ -156,6 +185,16 @@
                             <button class="seg-btn" data-value="x">X</button>
                             <button class="seg-btn active" data-value="random">تصادفی</button>
                             <button class="seg-btn" data-value="o">O</button>
+                        </div>
+                    </div>
+
+                    <div class="option-row" id="timerRow">
+                        <label class="option-label">تایمر هر حرکت</label>
+                        <div class="segmented-control" id="timerControl">
+                            <button class="seg-btn active" data-value="0">خاموش</button>
+                            <button class="seg-btn" data-value="10">۱۰ث</button>
+                            <button class="seg-btn" data-value="15">۱۵ث</button>
+                            <button class="seg-btn" data-value="30">۳۰ث</button>
                         </div>
                     </div>
                 </div>
@@ -182,7 +221,10 @@
             <!-- Score bar -->
             <div class="score-bar">
                 <div class="score-card score-card-x" id="scoreCardX">
-                    <div class="score-mark">×</div>
+                    <div class="score-mark-row">
+                        <span class="score-avatar" id="scoreAvatarX">⭐</span>
+                        <span class="score-mark">×</span>
+                    </div>
                     <div class="score-name" id="scoreNameX">بازیکن ۱</div>
                     <div class="score-value" id="scoreValueX">0</div>
                 </div>
@@ -197,16 +239,30 @@
                     </div>
                 </div>
                 <div class="score-card score-card-o" id="scoreCardO">
-                    <div class="score-mark">○</div>
+                    <div class="score-mark-row">
+                        <span class="score-avatar" id="scoreAvatarO">🌙</span>
+                        <span class="score-mark">○</span>
+                    </div>
                     <div class="score-name" id="scoreNameO">بازیکن ۲</div>
                     <div class="score-value" id="scoreValueO">0</div>
                 </div>
             </div>
 
-            <!-- Turn indicator -->
-            <div class="turn-indicator" id="turnIndicator">
-                <div class="turn-pulse"></div>
-                <span class="turn-text" id="turnText">نوبت: <strong>بازیکن ۱</strong></span>
+            <!-- Turn indicator + timer -->
+            <div class="turn-row">
+                <div class="turn-indicator" id="turnIndicator">
+                    <div class="turn-pulse"></div>
+                    <span class="turn-text" id="turnText">نوبت: <strong>بازیکن ۱</strong></span>
+                </div>
+                <div class="move-timer" id="moveTimer" style="display:none">
+                    <div class="timer-ring">
+                        <svg viewBox="0 0 36 36">
+                            <circle class="timer-bg-circle" cx="18" cy="18" r="16" />
+                            <circle class="timer-fg-circle" cx="18" cy="18" r="16" id="timerFgCircle" />
+                        </svg>
+                        <span class="timer-value" id="timerValue">15</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Board -->
@@ -318,6 +374,49 @@
                     </div>
                 </div>
 
+                <!-- Donut + Results bar -->
+                <div class="stats-charts">
+                    <div class="chart-card">
+                        <h3 class="chart-title">توزیع نتایج</h3>
+                        <canvas id="donutChart" class="donut-canvas"></canvas>
+                    </div>
+                    <div class="chart-card chart-card-wide">
+                        <h3 class="chart-title">آخرین بازی‌ها</h3>
+                        <canvas id="resultsChart" class="results-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Per-difficulty stats -->
+                <div class="diff-stats" id="diffStats">
+                    <h3 class="section-title">عملکرد در برابر ربات</h3>
+                    <div class="diff-stats-grid">
+                        <div class="diff-stat-tile diff-easy">
+                            <div class="diff-stat-label">آسان</div>
+                            <div class="diff-stat-values">
+                                <span class="diff-w" id="diffEasyW">0</span>W ·
+                                <span class="diff-l" id="diffEasyL">0</span>L ·
+                                <span class="diff-d" id="diffEasyD">0</span>D
+                            </div>
+                        </div>
+                        <div class="diff-stat-tile diff-medium">
+                            <div class="diff-stat-label">متوسط</div>
+                            <div class="diff-stat-values">
+                                <span class="diff-w" id="diffMediumW">0</span>W ·
+                                <span class="diff-l" id="diffMediumL">0</span>L ·
+                                <span class="diff-d" id="diffMediumD">0</span>D
+                            </div>
+                        </div>
+                        <div class="diff-stat-tile diff-hard">
+                            <div class="diff-stat-label">سخت</div>
+                            <div class="diff-stat-values">
+                                <span class="diff-w" id="diffHardW">0</span>W ·
+                                <span class="diff-l" id="diffHardL">0</span>L ·
+                                <span class="diff-d" id="diffHardD">0</span>D
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="leaderboard">
                     <h3 class="section-title">جدول برترین‌ها</h3>
                     <div class="leaderboard-list" id="leaderboardList">
@@ -326,6 +425,9 @@
                 </div>
 
                 <div class="stats-actions">
+                    <button class="btn btn-secondary" data-action="export-data">📥 صادر کردن</button>
+                    <button class="btn btn-secondary" data-action="import-data">📤 وارد کردن</button>
+                    <input type="file" id="importFile" accept=".json" style="display:none">
                     <button class="btn btn-danger" data-action="reset-stats">پاک کردن آمار</button>
                 </div>
             </div>
@@ -404,6 +506,24 @@
                         </label>
                     </div>
                 </div>
+
+                <div class="setting-group">
+                    <h3 class="setting-group-title">دسترس‌پذیری</h3>
+                    <div class="setting-row">
+                        <span class="setting-label">حالت کوررنگی</span>
+                        <label class="switch">
+                            <input type="checkbox" id="colorBlindMode">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">کنتراست بالا</span>
+                        <label class="switch">
+                            <input type="checkbox" id="highContrastMode">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -454,11 +574,129 @@ p>
                         <li><kbd>۱</kbd> تا <kbd>۹</kbd>: انتخاب خانه (شبیه صفحه‌کلید عددی)</li>
                         <li><kbd>U</kbd>: برگشت آخرین حرکت</li>
                         <li><kbd>R</kbd>: شروع دوباره</li>
+                        <li><kbd>H</kbd>: نمایش راهنما حرکت</li>
                         <li><kbd>Esc</kbd>: خروج به منوی اصلی</li>
                     </ul>
                 </div>
             </div>
         </section>
+
+        <!-- ============ ACHIEVEMENTS SCREEN ============ -->
+        <section class="screen" id="achievementsScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">دستاوردها</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="achievements-container">
+                <div class="achievements-progress">
+                    <div class="ach-progress-text">
+                        <span id="achUnlocked">0</span> از <span id="achTotal">0</span> دستاورد
+                    </div>
+                    <div class="ach-progress-bar">
+                        <div class="ach-progress-fill" id="achProgressFill"></div>
+                    </div>
+                </div>
+                <div class="achievements-grid" id="achievementsGrid"></div>
+            </div>
+        </section>
+
+        <!-- ============ REPLAY SCREEN ============ -->
+        <section class="screen" id="replayScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">بازپخش آخرین بازی</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="replay-container">
+                <div class="replay-info" id="replayInfo"></div>
+                <div class="board-wrap">
+                    <div class="board" id="replayBoard">
+                        <div class="cell" data-index="0"></div>
+                        <div class="cell" data-index="1"></div>
+                        <div class="cell" data-index="2"></div>
+                        <div class="cell" data-index="3"></div>
+                        <div class="cell" data-index="4"></div>
+                        <div class="cell" data-index="5"></div>
+                        <div class="cell" data-index="6"></div>
+                        <div class="cell" data-index="7"></div>
+                        <div class="cell" data-index="8"></div>
+                    </div>
+                    <div class="winning-line" id="replayWinningLine"></div>
+                </div>
+                <div class="replay-controls">
+                    <button class="btn btn-ghost btn-sm" data-action="replay-prev">⏪ قبلی</button>
+                    <button class="btn btn-primary btn-sm" data-action="replay-play" id="replayPlayBtn">▶ پخش</button>
+                    <button class="btn btn-ghost btn-sm" data-action="replay-next">بعدی ⏩</button>
+                </div>
+                <div class="replay-progress">
+                    <span class="replay-step" id="replayStep">۰ / ۰</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ AVATAR PICKER MODAL ============ -->
+        <div class="modal-overlay" id="avatarPickerModal">
+            <div class="modal">
+                <h2 class="modal-title-small" id="avatarPickerTitle">انتخاب آواتار</h2>
+                <div class="avatar-grid" id="avatarGrid"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-action="close-avatar-picker">انصراف</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ ONBOARDING MODAL ============ -->
+        <div class="modal-overlay" id="onboardingModal">
+            <div class="modal modal-onboarding">
+                <div class="onboarding-slides" id="onboardingSlides">
+                    <div class="onboarding-slide active" data-slide="0">
+                        <div class="onboarding-icon">🎮</div>
+                        <h2 class="onboarding-title">به بازی دوز خوش آمدید!</h2>
+                        <p class="onboarding-text">یک بازی کلاسیک با تجربه‌ای مدرن. آماده‌اید؟</p>
+                    </div>
+                    <div class="onboarding-slide" data-slide="1">
+                        <div class="onboarding-icon">🤖</div>
+                        <h2 class="onboarding-title">سه سطح هوش مصنوعی</h2>
+                        <p class="onboarding-text">از آسان تا سخت - ربات سخت با الگوریتم Minimax شکست‌ناپذیر است!</p>
+                    </div>
+                    <div class="onboarding-slide" data-slide="2">
+                        <div class="onboarding-icon">🏅</div>
+                        <h2 class="onboarding-title">دستاوردها و آمار</h2>
+                        <p class="onboarding-text">۱۶ دستاورد کسب کنید، آمار خود را دنبال کنید و در جدول برترین‌ها صعود کنید.</p>
+                    </div>
+                    <div class="onboarding-slide" data-slide="3">
+                        <div class="onboarding-icon">⌨️</div>
+                        <h2 class="onboarding-title">میان‌برهای صفحه‌کلید</h2>
+                        <p class="onboarding-text">با کلیدهای ۱ تا ۹ سریع بازی کنید. U برای برگشت، R برای شروع دوباره.</p>
+                    </div>
+                </div>
+                <div class="onboarding-dots" id="onboardingDots"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-action="skip-onboarding">رد شدن</button>
+                    <button class="btn btn-primary" data-action="next-onboarding" id="onboardingNextBtn">بعدی</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ RESUME GAME MODAL ============ -->
+        <div class="modal-overlay" id="resumeModal">
+            <div class="modal">
+                <div class="modal-icon">💾</div>
+                <h2 class="modal-title-small">بازی ناتمام دارید</h2>
+                <p class="modal-subtitle">می‌خواهید ادامه دهید یا از نو شروع کنید؟</p>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-action="discard-resume">از نو</button>
+                    <button class="btn btn-primary" data-action="resume-game">ادامه</button>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -470,6 +708,10 @@ p>
     <script src="js/audio.js"></script>
     <script src="js/game.js"></script>
     <script src="js/ai.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/timer.js"></script>
+    <script src="js/replay.js"></script>
+    <script src="js/chart.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 </body>

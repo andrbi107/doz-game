@@ -208,6 +208,45 @@ const Audio = (function () {
             });
         },
 
+        achievement() {
+            // Sparkly achievement unlock sound
+            const notes = [659.25, 880, 1046.50, 1318.51]; // E5 A5 C6 E6
+            notes.forEach((f, i) => {
+                setTimeout(() => {
+                    tone({
+                        freq: f,
+                        duration: 0.12,
+                        type: 'triangle',
+                        gain: 0.25,
+                        release: 0.18,
+                    });
+                }, i * 75);
+            });
+        },
+
+        timerWarn() {
+            // Urgent ticking when timer is low
+            tone({
+                freq: 880,
+                duration: 0.05,
+                type: 'square',
+                gain: 0.15,
+                release: 0.04,
+            });
+        },
+
+        timerExpire() {
+            // Buzz when timer runs out
+            tone({
+                freq: 150,
+                slideTo: 80,
+                duration: 0.4,
+                type: 'sawtooth',
+                gain: 0.2,
+                release: 0.2,
+            });
+        },
+
         startGame() {
             const notes = [392, 523.25, 659.25]; // G4 C5 E5
             notes.forEach((f, i) => {

@@ -1,0 +1,649 @@
+/* ============================================
+   COMPONENTS.CSS - Styles for new v2 features
+   - Menu rows, badges, avatars, timer ring
+   - Achievements grid, replay controls
+   - Onboarding slides, charts, diff stats
+   ============================================ */
+
+/* ---------- Menu rows ---------- */
+.menu-row {
+    display: flex;
+    gap: 10px;
+}
+.menu-row .btn {
+    flex: 1;
+}
+
+/* ---------- Badge ---------- */
+.badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin-right: 6px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* ---------- Player mark row (avatar + mark) ---------- */
+.player-mark-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.avatar-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    cursor: pointer;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    padding: 0;
+    margin-right: auto;
+}
+
+.avatar-btn:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    transform: scale(1.05);
+}
+
+.avatar-emoji {
+    line-height: 1;
+}
+
+/* ---------- Score mark row ---------- */
+.score-mark-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.score-avatar {
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* ---------- Turn row (indicator + timer) ---------- */
+.turn-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 0 auto 14px;
+    flex-wrap: wrap;
+}
+
+/* ---------- Move timer ring ---------- */
+.move-timer {
+    width: 56px;
+    height: 56px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.timer-ring {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.timer-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.timer-bg-circle {
+    fill: none;
+    stroke: var(--surface);
+    stroke-width: 3;
+}
+
+.timer-fg-circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 100.5;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.1s linear, stroke 0.2s;
+}
+
+.move-timer.warn .timer-fg-circle {
+    stroke: var(--warning);
+}
+
+.move-timer.danger .timer-fg-circle {
+    stroke: var(--danger);
+    animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.timer-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Avatar picker modal ---------- */
+.modal-title-small {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.avatar-option {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    padding: 0;
+    color: var(--text-primary);
+}
+
+.avatar-option:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    transform: scale(1.05);
+}
+
+.avatar-option.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---------- Achievements screen ---------- */
+.achievements-container {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.achievements-progress {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    margin-bottom: 16px;
+}
+
+.ach-progress-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.ach-progress-text span {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.ach-progress-bar {
+    background: var(--surface);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.ach-progress-fill {
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    height: 100%;
+    width: 0%;
+    transition: width var(--transition-slow);
+    border-radius: 999px;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.achievement-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    text-align: center;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.achievement-card.unlocked {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, var(--surface-elevated), var(--accent-soft));
+}
+
+.achievement-card.unlocked::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+}
+
+.achievement-icon {
+    font-size: 32px;
+    margin-bottom: 6px;
+    filter: grayscale(1);
+    opacity: 0.4;
+    transition: all var(--transition-base);
+}
+
+.achievement-card.unlocked .achievement-icon {
+    filter: none;
+    opacity: 1;
+    animation: achievementBounce 0.6s ease;
+}
+
+@keyframes achievementBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.achievement-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+}
+
+.achievement-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.achievement-card.unlocked .achievement-desc {
+    color: var(--text-secondary);
+}
+
+.achievement-date {
+    font-size: 10px;
+    color: var(--accent);
+    margin-top: 6px;
+    font-family: monospace;
+}
+
+/* ---------- Replay screen ---------- */
+.replay-container {
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.replay-info {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    width: 100%;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.replay-info strong {
+    color: var(--text-primary);
+}
+
+.replay-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.replay-progress {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Onboarding ---------- */
+.modal-onboarding {
+    max-width: 420px;
+}
+
+.onboarding-slides {
+    position: relative;
+    min-height: 200px;
+    margin-bottom: 16px;
+}
+
+.onboarding-slide {
+    display: none;
+    text-align: center;
+    animation: floatIn 0.4s ease;
+}
+
+.onboarding-slide.active {
+    display: block;
+}
+
+.onboarding-icon {
+    font-size: 64px;
+    margin-bottom: 12px;
+}
+
+.onboarding-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.onboarding-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.onboarding-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.onboarding-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    transition: all var(--transition-fast);
+}
+
+.onboarding-dot.active {
+    background: var(--accent);
+    width: 24px;
+    border-radius: 999px;
+}
+
+/* ---------- Charts ---------- */
+.stats-charts {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 12px;
+}
+
+.chart-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+}
+
+.chart-card-wide {
+    grid-column: span 1;
+}
+
+.chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.donut-canvas {
+    width: 100%;
+    height: 140px;
+}
+
+.results-canvas {
+    width: 100%;
+    height: 140px;
+}
+
+@media (max-width: 480px) {
+    .stats-charts {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Per-difficulty stats ---------- */
+.diff-stats {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+}
+
+.diff-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.diff-stat-tile {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 10px 6px;
+    text-align: center;
+    border-top: 3px solid var(--accent);
+}
+
+.diff-easy { border-top-color: var(--success); }
+.diff-medium { border-top-color: var(--warning); }
+.diff-hard { border-top-color: var(--danger); }
+
+.diff-stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.diff-stat-values {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.diff-w { color: var(--success); font-weight: 700; }
+.diff-l { color: var(--danger); font-weight: 700; }
+.diff-d { color: var(--warning); font-weight: 700; }
+
+/* ---------- Stats actions ---------- */
+.stats-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.stats-actions .btn {
+    flex: 0 1 auto;
+}
+
+/* ---------- Color blind mode ---------- */
+body.color-blind-mode .cell.x .mark,
+body.color-blind-mode .score-card-x .score-mark,
+body.color-blind-mode .mark-x {
+    color: #0066cc !important;
+    text-shadow: none !important;
+}
+
+body.color-blind-mode .cell.o .mark,
+body.color-blind-mode .score-card-o .score-mark,
+body.color-blind-mode .mark-o {
+    color: #cc6600 !important;
+    text-shadow: none !important;
+}
+
+body.color-blind-mode .cell.x .mark::before {
+    content: 'X';
+}
+
+body.color-blind-mode .cell.o .mark::before {
+    content: 'O';
+}
+
+/* Add a small pattern overlay for clarity */
+body.color-blind-mode .cell.x {
+    background-image: linear-gradient(45deg, transparent 45%, rgba(0, 102, 204, 0.1) 45%, rgba(0, 102, 204, 0.1) 55%, transparent 55%);
+}
+
+body.color-blind-mode .cell.o {
+    background-image: radial-gradient(circle at center, rgba(204, 102, 0, 0.1) 30%, transparent 30%);
+}
+
+/* ---------- High contrast mode ---------- */
+body.high-contrast {
+    --bg-gradient-1: #000000;
+    --bg-gradient-2: #000000;
+    --bg-gradient-3: #000000;
+    --surface: rgba(255, 255, 255, 0.05);
+    --surface-elevated: rgba(255, 255, 255, 0.1);
+    --surface-hover: rgba(255, 255, 255, 0.2);
+    --border: rgba(255, 255, 255, 0.3);
+    --border-strong: rgba(255, 255, 255, 0.5);
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --text-muted: #b0b0b0;
+}
+
+body.high-contrast .cell {
+    border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+body.high-contrast .btn {
+    border-width: 2px;
+}
+
+/* ---------- Achievement toast ---------- */
+.achievement-toast {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px var(--accent-glow);
+    animation: achievementToastIn 0.4s var(--transition-spring), achievementToastOut 0.4s ease 3.6s forwards;
+    max-width: 320px;
+}
+
+.achievement-toast .ach-toast-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.achievement-toast .ach-toast-text {
+    flex: 1;
+}
+
+.achievement-toast .ach-toast-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+}
+
+.achievement-toast .ach-toast-title {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+@keyframes achievementToastIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes achievementToastOut {
+    to {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.8);
+    }
+}
+
+/* ---------- Install button (PWA) ---------- */
+.install-banner {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface-elevated);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 90;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-lg);
+    max-width: 90vw;
+    animation: floatIn 0.4s ease;
+}
+
+.install-banner-text {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.install-banner-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.install-banner .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+}
