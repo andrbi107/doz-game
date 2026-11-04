@@ -85,7 +85,9 @@
 
         // Listen for install prompt
         window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
+            // Stash the event so it can be triggered later
             deferredInstallPrompt = e;
             // Show banner after a delay if user hasn't dismissed
             if (!sessionStorage.getItem('installDismissed')) {
@@ -97,6 +99,12 @@
                     }
                 }, 8000);
             }
+        });
+
+        // Listen for app installed event
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            if (UI && UI.toast) UI.toast('بازی نصب شد! 🎉');
         });
 
         // Hook achievements

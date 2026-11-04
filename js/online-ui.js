@@ -329,10 +329,25 @@ const OnlineUI = (function () {
             if (UI && UI.toast) UI.toast('کد را وارد کنید');
             return;
         }
+        if (!Online.isConnected()) {
+            if (UI && UI.toast) UI.toast('اتصال به سرور برقرار نیست. ابتدا وارد شوید.');
+            // Try to connect
+            try {
+                Online.connect();
+            } catch (e) {
+                if (UI && UI.toast) UI.toast('اتصال ناموفق: ' + e.message);
+            }
+            return;
+        }
         try {
-            await Online.joinPrivateRoom(code);
+            const result = await Online.joinPrivateRoom(code);
+            if (result && result.ok) {
+                els.joinPrivateForm.style.display = 'none';
+                $$('.matchmaking-cards .mode-card').forEach(c => c.style.display = '');
+                if (UI && UI.toast) UI.toast('در حال اتصال به اتاق...');
+            }
         } catch (e) {
-            if (UI && UI.toast) UI.toast(e.message);
+            if (UI && UI.toast) UI.toast(e.message || 'خطا در پیوستن به اتاق');
         }
     }
 
@@ -369,9 +384,13 @@ const OnlineUI = (function () {
     }
 
     function handleGameStart(data) {
-        if (data.role) {
-            onlineGameState.myRole = data.role;
-            els.onlineGameTitle.textContent = `شما: ${data.role.toUpperCase()}`;
+        // BUG-014 fix: game:start now includes yourRole
+        if (data.yourRole) {
+            onlineGameState.myRole = data.yourRole;
+            els.onlineGameTitle.textContent = `شما: ${data.yourRole.toUpperCase()}`;
+        }
+        if (data.roomId) {
+            onlineGameState.roomId = data.roomId;
         }
         if (data.board) {
             onlineGameState.board = data.board.slice();
@@ -385,6 +404,7 @@ const OnlineUI = (function () {
             renderOnlineBoard();
             updateOnlineTurn();
             UI.showScreen('onlineGame');
+            if (UI && UI.toast) UI.toast('بازی شروع شد! شما: ' + (data.yourRole || '').toUpperCase());
         }
     }
 
@@ -448,9 +468,21 @@ const OnlineUI = (function () {
     }
 
     function handleRematchStart(data) {
+        // BUG-014 fix: rematch-start now includes yourRole
+        if (data.yourRole) {
+            onlineGameState.myRole = data.yourRole;
+            els.onlineGameTitle.textContent = `شما: ${data.yourRole.toUpperCase()}`;
+        }
+        if (data.roomId) {
+            onlineGameState.roomId = data.roomId;
+        }
         onlineGameState.board = data.board.slice();
         onlineGameState.currentPlayer = data.currentPlayer || 'x';
         onlineGameState.finished = false;
+        if (data.players) {
+            els.onlineScoreNameX.textContent = data.players.x;
+            els.onlineScoreNameO.textContent = data.players.o;
+        }
         renderOnlineBoard();
         updateOnlineTurn();
         if (UI && UI.toast) UI.toast('بازی مجدد شروع شد!');
@@ -460,8 +492,16 @@ const OnlineUI = (function () {
     function handleOnlineCellClick(index) {
         if (onlineGameState.finished) return;
         if (onlineGameState.board[index] !== null) return;
+        if (!onlineGameState.myRole) {
+            if (UI && UI.toast) UI.toast('نقش شما مشخص نیست. منتظر شروع بازی بمانید.');
+            return;
+        }
         if (onlineGameState.currentPlayer !== onlineGameState.myRole) {
-            if (UI && UI.toast) UI.toast('نوبت شما نیست');
+            if (UI && UI.toast) UI.toast('نوبت حریف است');
+            return;
+        }
+        if (!onlineGameState.roomId) {
+            if (UI && UI.toast) UI.toast('اتاق بازی یافت نشد');
             return;
         }
         Online.sendMove(onlineGameState.roomId, index);

@@ -3,7 +3,7 @@
    Cache-first for app shell, network-first for nothing (no API)
    ============================================ */
 
-const CACHE_NAME = 'doz-v7.1.0';
+const CACHE_NAME = 'doz-v7.3.0';
 const APP_SHELL = [
     './',
     './index.html',

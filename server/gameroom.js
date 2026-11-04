@@ -1,6 +1,9 @@
 /* ============================================
    SERVER/GAMEROOM.JS - Manages a single game room
    Handles moves, validation, win detection, ELO update
+
+   BUG-014 fix: Send individual game:start to each player with their role
+   BUG-016 fix: Include roomId in all events so client can track it
    ============================================ */
 
 const { v4: uuidv4 } = require('uuid');
@@ -20,6 +23,10 @@ function setOnGameEnd(fn) {
 }
 
 function create(roomId, player1, player2, io) {
+    // Assign X/O randomly
+    const p1Role = Math.random() < 0.5 ? 'x' : 'o';
+    const p2Role = p1Role === 'x' ? 'o' : 'x';
+
     const room = {
         id: roomId,
         player1,
@@ -30,18 +37,20 @@ function create(roomId, player1, player2, io) {
         winner: null,
         finished: false,
         rematchVotes: new Set(),
-        // Assign X/O randomly
-        roles: Math.random() < 0.5
-            ? { [player1.id]: 'x', [player2.id]: 'o' }
-            : { [player1.id]: 'o', [player2.id]: 'x' },
+        roles: {},
+        line: null,
     };
+    room.roles[player1.id] = p1Role;
+    room.roles[player2.id] = p2Role;
 
     function getPlayerRole(socket) {
         return room.roles[socket.id];
     }
 
-    function getOpponent(socket) {
-        return socket.id === player1.id ? player2 : player1;
+    function getPlayerName(role) {
+        if (room.roles[player1.id] === role) return player1.username;
+        if (room.roles[player2.id] === role) return player2.username;
+        return '?';
     }
 
     function start() {
@@ -49,25 +58,29 @@ function create(roomId, player1, player2, io) {
         player1.join(roomId);
         player2.join(roomId);
 
-        // Notify both players
-        io.to(roomId).emit('game:start', {
+        // BUG-014 fix: Send individual game:start to each player with their role
+        // This ensures each player knows their own role
+        const baseData = {
             roomId,
             board: room.board,
             currentPlayer: room.currentPlayer,
             players: {
-                x: player1.id === Object.keys(room.roles).find(k => room.roles[k] === 'x') ? player1.username : player2.username,
-                o: player1.id === Object.keys(room.roles).find(k => room.roles[k] === 'o') ? player1.username : player2.username,
+                x: getPlayerName('x'),
+                o: getPlayerName('o'),
             },
-            yourRole: getPlayerRole(player1),
-        });
-        // Send individual role info
-        player1.emit('game:role', { role: room.roles[player1.id] });
-        player2.emit('game:role', { role: room.roles[player2.id] });
+        };
+
+        player1.emit('game:start', { ...baseData, yourRole: p1Role });
+        player2.emit('game:start', { ...baseData, yourRole: p2Role });
     }
 
     function handleMove(socket, index) {
         if (room.finished) return;
         const role = getPlayerRole(socket);
+        if (!role) {
+            socket.emit('game:error', { error: 'شما در این بازی نیستید' });
+            return;
+        }
         if (role !== room.currentPlayer) {
             socket.emit('game:error', { error: 'نوبت شما نیست' });
             return;
@@ -89,11 +102,16 @@ function create(roomId, player1, player2, io) {
         const result = checkWinner(room.board);
         if (result.winner) {
             room.winner = result.winner;
+            room.line = result.line;
             room.finished = true;
+            // Broadcast move
             io.to(roomId).emit('game:move', {
+                roomId,
                 index, player: role, board: room.board,
             });
+            // Broadcast end
             io.to(roomId).emit('game:end', {
+                roomId,
                 winner: result.winner,
                 line: result.line,
                 board: room.board,
@@ -110,9 +128,11 @@ function create(roomId, player1, player2, io) {
             // Draw
             room.finished = true;
             io.to(roomId).emit('game:move', {
+                roomId,
                 index, player: role, board: room.board,
             });
             io.to(roomId).emit('game:end', {
+                roomId,
                 winner: null,
                 line: null,
                 board: room.board,
@@ -126,6 +146,7 @@ function create(roomId, player1, player2, io) {
         // Switch player
         room.currentPlayer = role === 'x' ? 'o' : 'x';
         io.to(roomId).emit('game:move', {
+            roomId,
             index, player: role, board: room.board, currentPlayer: room.currentPlayer,
         });
     }
@@ -133,10 +154,12 @@ function create(roomId, player1, player2, io) {
     function handleResign(socket) {
         if (room.finished) return;
         const role = getPlayerRole(socket);
+        if (!role) return;
         const winner = role === 'x' ? 'o' : 'x';
         room.winner = winner;
         room.finished = true;
         io.to(roomId).emit('game:end', {
+            roomId,
             winner,
             line: null,
             board: room.board,
@@ -158,29 +181,38 @@ function create(roomId, player1, player2, io) {
             room.currentPlayer = 'x';
             room.moves = [];
             room.winner = null;
+            room.line = null;
             room.finished = false;
             room.rematchVotes.clear();
             // Swap roles
             const tmp = room.roles[player1.id];
             room.roles[player1.id] = room.roles[player2.id];
             room.roles[player2.id] = tmp;
-            io.to(roomId).emit('game:rematch-start', {
+            // Send rematch-start to each player with their new role
+            const baseData = {
+                roomId,
                 board: room.board,
                 currentPlayer: room.currentPlayer,
-            });
-            player1.emit('game:role', { role: room.roles[player1.id] });
-            player2.emit('game:role', { role: room.roles[player2.id] });
+                players: {
+                    x: getPlayerName('x'),
+                    o: getPlayerName('o'),
+                },
+            };
+            player1.emit('game:rematch-start', { ...baseData, yourRole: room.roles[player1.id] });
+            player2.emit('game:rematch-start', { ...baseData, yourRole: room.roles[player2.id] });
         }
     }
 
     function handleDisconnect(socket) {
         if (room.finished) return;
-        // Auto-loss for disconnected player
         const role = getPlayerRole(socket);
+        if (!role) return;
+        // Auto-loss for disconnected player
         const winner = role === 'x' ? 'o' : 'x';
         room.winner = winner;
         room.finished = true;
         io.to(roomId).emit('game:end', {
+            roomId,
             winner,
             line: null,
             board: room.board,
@@ -225,9 +257,8 @@ function checkWinner(board) {
     return { winner: null, line: null };
 }
 
-let activeCount = 0;
 function getActiveCount() {
-    return activeCount;
+    return 0; // placeholder - actual count tracked in index.js
 }
 
 module.exports = {

@@ -168,10 +168,6 @@ const Online = (function () {
             if (handlers.onGameStart) handlers.onGameStart(data);
         });
 
-        socket.on('game:role', (data) => {
-            if (handlers.onGameStart) handlers.onGameStart({ role: data.role });
-        });
-
         socket.on('game:move', (data) => {
             if (handlers.onGameMove) handlers.onGameMove(data);
         });
