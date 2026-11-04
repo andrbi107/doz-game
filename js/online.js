@@ -289,7 +289,20 @@ const Online = (function () {
         const resp = await fetch(getServerUrl() + path, {
             headers: { 'Authorization': 'Bearer ' + token },
         });
-        if (!resp.ok) throw new Error((await resp.json()).error || 'Request failed');
+        if (resp.status === 401) {
+            // Token expired or invalid - clear and redirect to login
+            handleAuthFailure();
+            throw new Error('نشست شما منقضی شده. لطفاً دوباره وارد شوید.');
+        }
+        if (!resp.ok) {
+            try {
+                const data = await resp.json();
+                throw new Error(data.error || 'خطا در درخواست');
+            } catch (e) {
+                if (e.message) throw e;
+                throw new Error('سرور در دسترس نیست');
+            }
+        }
         return resp.json();
     }
 
@@ -298,8 +311,35 @@ const Online = (function () {
             method,
             headers: { 'Authorization': 'Bearer ' + token },
         });
-        if (!resp.ok) throw new Error((await resp.json()).error || 'Request failed');
+        if (resp.status === 401) {
+            handleAuthFailure();
+            throw new Error('نشست شما منقضی شده. لطفاً دوباره وارد شوید.');
+        }
+        if (!resp.ok) {
+            try {
+                const data = await resp.json();
+                throw new Error(data.error || 'خطا در درخواست');
+            } catch (e) {
+                if (e.message) throw e;
+                throw new Error('سرور در دسترس نیست');
+            }
+        }
         return resp.json();
+    }
+
+    /**
+     * Handle auth failure - clear token and notify user.
+     */
+    function handleAuthFailure() {
+        token = null;
+        currentUser = null;
+        clearToken();
+        clearUser();
+        if (socket) {
+            socket.disconnect();
+            socket = null;
+        }
+        isConnected = false;
     }
 
     async function getFriends() {

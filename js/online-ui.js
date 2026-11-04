@@ -84,6 +84,21 @@ const OnlineUI = (function () {
         // Setup emote bar
         setupEmoteBar();
 
+        // Auth form: submit on Enter
+        if (els.authPassword) {
+            els.authPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitAuth();
+            });
+        }
+        if (els.authUsername) {
+            els.authUsername.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if (els.authPassword.value) submitAuth();
+                    else els.authPassword.focus();
+                }
+            });
+        }
+
         // Check if already logged in
         if (Online.isLoggedIn()) {
             refreshOnlineUI();
@@ -119,14 +134,23 @@ const OnlineUI = (function () {
     /* ---------- Auth ---------- */
     function showAuth(mode) {
         authMode = mode;
-        els.authTitle.textContent = mode === 'login' ? 'ورود به حساب' : 'ثبت‌نام';
+        els.authTitle.textContent = mode === 'login' ? 'ورود به حساب' : 'ثبت‌نام حساب جدید';
         els.authSubmitBtn.textContent = mode === 'login' ? 'ورود' : 'ثبت‌نام';
         els.authSwitchText.textContent = mode === 'login' ? 'حساب ندارید؟' : 'حساب دارید؟';
         els.authSwitchBtn.textContent = mode === 'login' ? 'ثبت‌نام' : 'ورود';
         els.authError.style.display = 'none';
         els.authUsername.value = '';
         els.authPassword.value = '';
+        // Update hint
+        const hint = document.getElementById('authHint');
+        if (hint) {
+            hint.textContent = mode === 'login'
+                ? '💡 اگر قبلاً ثبت‌نام کرده‌اید، نام کاربری و رمز عبور خود را وارد کنید.'
+                : '💡 ثبت‌نام رایگان است. نام کاربری و رمز عبور انتخاب کنید.';
+        }
         els.authModal.classList.add('active');
+        // Focus username field
+        setTimeout(() => els.authUsername.focus(), 100);
     }
 
     function hideAuth() {
@@ -154,15 +178,23 @@ const OnlineUI = (function () {
             }
             hideAuth();
             refreshOnlineUI();
-            if (UI && UI.toast) UI.toast(authMode === 'login' ? 'خوش آمدید!' : 'ثبت‌نام موفق!');
+            if (UI && UI.toast) UI.toast(authMode === 'login' ? 'خوش آمدید!' : 'ثبت‌نام موفق! 🎉');
             // Try to connect socket
             try {
                 Online.connect();
             } catch (e) {
                 console.warn('Socket connect failed (server may be down):', e.message);
+                if (UI && UI.toast) UI.toast('اتصال زنده برقرار نشد. بازی آنلاین ممکن است محدود باشد.');
             }
         } catch (e) {
-            showAuthError(e.message);
+            // Better error messages for common cases
+            let msg = e.message;
+            if (msg.includes('نام کاربری یا رمز عبور اشتباه')) {
+                msg = 'نام کاربری یا رمز عبور اشتباه است. اگر حساب ندارید، روی «ثبت‌نام» کلیک کنید.';
+            } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+                msg = 'اتصال به سرور برقرار نشد. مطمئن شوید سرور در حال اجراست و آدرس آن صحیح است.';
+            }
+            showAuthError(msg);
         }
         els.authSubmitBtn.disabled = false;
         els.authSubmitBtn.textContent = authMode === 'login' ? 'ورود' : 'ثبت‌نام';
@@ -183,15 +215,46 @@ const OnlineUI = (function () {
     function showOnlineScreen() {
         UI.showScreen('online');
         refreshOnlineUI();
-        // If logged in but not connected, try to connect
-        if (Online.isLoggedIn() && !Online.isConnected()) {
-            try {
-                Online.connect();
-            } catch (e) {
-                console.warn('Socket connect failed:', e.message);
-                if (UI && UI.toast) UI.toast('سرور آنلاین در دسترس نیست');
+        // Check server connectivity first
+        checkServerAndConnect();
+    }
+
+    /**
+     * Check if server is reachable and connect if logged in.
+     */
+    async function checkServerAndConnect() {
+        // Try health check first
+        try {
+            const resp = await fetch(Online.getServerUrl() + '/health');
+            if (!resp.ok) throw new Error('Server returned ' + resp.status);
+            // Server is online - if logged in, connect socket
+            if (Online.isLoggedIn() && !Online.isConnected()) {
+                try {
+                    Online.connect();
+                } catch (e) {
+                    console.warn('Socket connect failed:', e.message);
+                    if (UI && UI.toast) UI.toast('اتصال زنده برقرار نشد. برخی ویژگی‌ها محدود است.');
+                }
             }
+        } catch (e) {
+            // Server is offline - show banner
+            showConnectionBanner('سرور در دسترس نیست. ابتدا سرور را اجرا کنید: cd server && npm start');
         }
+    }
+
+    /**
+     * Show a connection banner on the online screen.
+     */
+    function showConnectionBanner(message, type) {
+        const container = document.querySelector('#onlineScreen .online-container');
+        if (!container) return;
+        // Remove existing banner
+        const existing = container.querySelector('.connection-banner');
+        if (existing) existing.remove();
+        const banner = document.createElement('div');
+        banner.className = 'connection-banner' + (type ? ' ' + type : '');
+        banner.textContent = message;
+        container.insertBefore(banner, container.firstChild);
     }
 
     function refreshOnlineUI() {
@@ -977,12 +1040,8 @@ const OnlineUI = (function () {
         $('#spectateScoreNameO').textContent = player2;
         $('#spectateViewerTitle').textContent = 'تماشا · ' + player1 + ' vs ' + player2;
         UI.showScreen('spectateViewer');
-        // Join spectator room
+        // Join spectator room (socket event handlers are in online.js)
         Online.spectateJoin(roomId);
-        // Setup socket handlers
-        if (socket) {
-            // Already handled in online.js event handlers
-        }
     }
 
     function leaveSpectate() {

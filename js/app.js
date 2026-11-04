@@ -162,16 +162,18 @@
     }
 
     function registerServiceWorker() {
-        if ('serviceWorker' in navigator) {
-            // Use relative path so it works on GitHub Pages subdirectory
+        // Only register on http/https - file:// protocol doesn't support SW
+        if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
             const swPath = './sw.js';
             navigator.serviceWorker.register(swPath)
                 .then(reg => {
                     console.log('SW registered:', reg.scope);
                 })
                 .catch(err => {
-                    console.warn('SW registration failed:', err);
+                    console.warn('SW registration failed:', err.message);
                 });
+        } else if (window.location.protocol === 'file:') {
+            console.info('SW not available on file:// protocol. Use a local HTTP server for full features.');
         }
     }
 
@@ -190,6 +192,36 @@
             const banner = document.querySelector('.install-banner');
             if (banner) banner.remove();
         });
+    }
+
+    /**
+     * Test server connection (v7.2).
+     */
+    async function testServerConnection() {
+        const statusEl = document.getElementById('serverStatus');
+        if (!statusEl) return;
+        const urlInput = document.getElementById('serverUrlInput');
+        if (urlInput && urlInput.value.trim()) {
+            Online.setServerUrl(urlInput.value.trim().replace(/\/$/, ''));
+        }
+        statusEl.className = 'server-status checking';
+        statusEl.textContent = 'در حال بررسی...';
+        try {
+            const resp = await fetch(Online.getServerUrl() + '/health', { timeout: 5000 });
+            if (resp.ok) {
+                const data = await resp.json();
+                statusEl.className = 'server-status online';
+                statusEl.textContent = '✅ آنلاین (' + data.playersOnline + ' بازیکن)';
+                UI.toast('اتصال به سرور برقرار شد!');
+            } else {
+                statusEl.className = 'server-status offline';
+                statusEl.textContent = '❌ خطا (' + resp.status + ')';
+            }
+        } catch (e) {
+            statusEl.className = 'server-status offline';
+            statusEl.textContent = '❌ آفلاین';
+            UI.toast('سرور در دسترس نیست: ' + e.message);
+        }
     }
 
     /* ---------- Event binding ---------- */
@@ -401,6 +433,19 @@
             });
         });
 
+        // Server URL input (v7.2)
+        const serverUrlInput = document.getElementById('serverUrlInput');
+        if (serverUrlInput) {
+            serverUrlInput.value = Online.getServerUrl();
+            serverUrlInput.addEventListener('change', () => {
+                const url = serverUrlInput.value.trim().replace(/\/$/, '');
+                if (url) {
+                    Online.setServerUrl(url);
+                    UI.toast('آدرس سرور ذخیره شد: ' + url);
+                }
+            });
+        }
+
         // Save state on page hide (for auto-resume)
         window.addEventListener('beforeunload', saveCurrentGameState);
         document.addEventListener('visibilitychange', () => {
@@ -478,6 +523,9 @@
             // Shop and Battle Pass (v7)
             case 'go-shop':           OnlineUI.showShop(); break;
             case 'go-battlepass':     OnlineUI.showBattlePass(); break;
+
+            // Server settings (v7.2)
+            case 'test-server':       testServerConnection(); break;
 
             case 'undo-move':     undoMove(); break;
             case 'toggle-sound':  toggleSound(); break;

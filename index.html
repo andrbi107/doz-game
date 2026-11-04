@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><text x='50' y='72' font-size='60' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>د</text></svg>">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -513,6 +513,21 @@
 
             <div class="settings-container">
                 <div class="setting-group">
+                    <h3 class="setting-group-title">🌐 سرور آنلاین</h3>
+                    <div class="setting-row">
+                        <span class="setting-label">آدرس سرور</span>
+                        <input type="text" class="form-input" id="serverUrlInput" placeholder="http://localhost:3000" style="width:200px;font-size:12px">
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">وضعیت اتصال</span>
+                        <span class="server-status" id="serverStatus">— بررسی نشده</span>
+                    </div>
+                    <div class="setting-row">
+                        <button class="btn btn-secondary btn-sm" data-action="test-server">تست اتصال</button>
+                    </div>
+                </div>
+
+                <div class="setting-group">
                     <h3 class="setting-group-title">ظاهر</h3>
                     <div class="setting-row">
                         <span class="setting-label">تم</span>
@@ -772,9 +787,9 @@ p>
                 <h2 class="modal-title-small" id="authTitle">ورود به حساب</h2>
                 <div class="auth-form">
                     <label class="form-label">نام کاربری</label>
-                    <input type="text" class="form-input" id="authUsername" maxlength="20" placeholder="نام کاربری">
+                    <input type="text" class="form-input" id="authUsername" maxlength="20" placeholder="نام کاربری (حداقل ۳ کاراکتر)">
                     <label class="form-label" style="margin-top:12px">رمز عبور</label>
-                    <input type="password" class="form-input" id="authPassword" maxlength="50" placeholder="رمز عبور">
+                    <input type="password" class="form-input" id="authPassword" maxlength="50" placeholder="رمز عبور (حداقل ۶ کاراکتر)">
                     <p class="auth-error" id="authError" style="display:none"></p>
                 </div>
                 <div class="modal-actions">
@@ -784,6 +799,9 @@ p>
                 <div class="auth-switch">
                     <span id="authSwitchText">حساب ندارید؟</span>
                     <button class="btn-link" data-action="switch-auth" id="authSwitchBtn">ثبت‌نام</button>
+                </div>
+                <div class="auth-hint" id="authHint">
+                    💡 برای بازی آنلاین ابتدا باید ثبت‌نام کنید. اگر قبلاً ثبت‌نام کرده‌اید، وارد شوید.
                 </div>
             </div>
         </div>

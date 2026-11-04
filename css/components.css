@@ -2011,3 +2011,82 @@ body.high-contrast .btn {
     align-items: center;
     justify-content: center;
 }
+
+/* ============================================
+   v7.2 STYLES - Server settings, error handling
+   ============================================ */
+
+/* ---------- Server status ---------- */
+.server-status {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-muted);
+}
+
+.server-status.online {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.server-status.offline {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.server-status.checking {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning);
+}
+
+/* ---------- Auth modal improvements ---------- */
+.auth-error {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: var(--radius-sm);
+    border-right: 3px solid var(--danger);
+    line-height: 1.5;
+}
+
+.auth-hint {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 6px;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+}
+
+/* ---------- Online screen: connection banner ---------- */
+.connection-banner {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.connection-banner.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--warning);
+}
+
+.connection-banner.success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: var(--success);
+}
