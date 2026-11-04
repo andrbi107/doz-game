@@ -1716,3 +1716,298 @@ body.high-contrast .btn {
 .insight-item strong {
     color: var(--text-primary);
 }
+
+/* ============================================
+   v7 STYLES - Shop, Battle Pass, Coins
+   ============================================ */
+
+/* ---------- Shop ---------- */
+.shop-container {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.shop-coins-bar {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.coins-icon { font-size: 24px; }
+.coins-value { font-size: 24px; font-weight: 900; }
+.coins-label { font-size: 13px; opacity: 0.9; }
+
+.shop-tabs {
+    display: flex;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    margin-bottom: 16px;
+}
+
+.shop-tab {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.shop-tab:hover { color: var(--text-primary); }
+.shop-tab.active {
+    background: var(--accent);
+    color: #fff;
+}
+
+.shop-items-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.shop-item-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    text-align: center;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.shop-item-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.shop-item-card.owned {
+    opacity: 0.6;
+}
+
+.shop-item-card.equipped {
+    border-color: var(--success);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+.shop-item-preview {
+    font-size: 40px;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.shop-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.shop-item-price {
+    font-size: 14px;
+    color: #f59e0b;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.shop-item-price.unaffordable {
+    color: var(--text-muted);
+}
+
+.shop-item-rarity {
+    display: inline-block;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.shop-item-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+.shop-item-actions .btn {
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+/* ---------- Battle Pass ---------- */
+.battlepass-container {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.bp-header {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    color: #fff;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.bp-season-num {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-bottom: 4px;
+}
+
+.bp-level-display {
+    font-size: 36px;
+    font-weight: 900;
+    margin-bottom: 4px;
+}
+
+.bp-level-label {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-bottom: 12px;
+}
+
+.bp-progress-bar {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.bp-progress-fill {
+    background: #fff;
+    height: 100%;
+    transition: width var(--transition-slow);
+}
+
+.bp-progress-text {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.bp-premium-banner {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    color: #fff;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bp-premium-banner.active {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.bp-premium-icon {
+    font-size: 32px;
+}
+
+.bp-premium-info {
+    flex: 1;
+}
+
+.bp-premium-title {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.bp-premium-desc {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.bp-tracks {
+    display: grid;
+    grid-template-columns: 60px 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.bp-track-header {
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    border-radius: var(--radius-sm);
+}
+
+.bp-track-header.free { background: var(--accent); }
+.bp-track-header.premium { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+.bp-track-header.level { background: var(--surface-elevated); color: var(--text-secondary); }
+
+.bp-reward-cell {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 10px;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.bp-reward-cell:hover {
+    border-color: var(--accent);
+}
+
+.bp-reward-cell.claimed {
+    opacity: 0.4;
+}
+
+.bp-reward-cell.claimable {
+    border-color: var(--success);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.bp-reward-cell.locked {
+    opacity: 0.3;
+}
+
+.bp-reward-cell.premium:not(.unlocked) {
+    opacity: 0.3;
+}
+
+.bp-reward-icon {
+    font-size: 20px;
+}
+
+.bp-reward-name {
+    color: var(--text-secondary);
+    line-height: 1.2;
+}
+
+.bp-level-cell {
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

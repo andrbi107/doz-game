@@ -26,6 +26,8 @@ const UI = (function () {
         league: $('#leagueScreen'),
         spectate: $('#spectateScreen'),
         spectateViewer: $('#spectateViewerScreen'),
+        shop: $('#shopScreen'),
+        battlepass: $('#battlepassScreen'),
     };
 
     const els = {

@@ -475,6 +475,10 @@
             case 'analyze-game':      OnlineUI.analyzeCurrentGame(); break;
             case 'close-analysis':    OnlineUI.closeAnalysis(); break;
 
+            // Shop and Battle Pass (v7)
+            case 'go-shop':           OnlineUI.showShop(); break;
+            case 'go-battlepass':     OnlineUI.showBattlePass(); break;
+
             case 'undo-move':     undoMove(); break;
             case 'toggle-sound':  toggleSound(); break;
             case 'toggle-hints':  toggleHints(); break;

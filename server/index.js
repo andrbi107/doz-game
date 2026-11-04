@@ -19,6 +19,8 @@ const Tournament = require('./tournament');
 const League = require('./league');
 const Spectator = require('./spectator');
 const Analysis = require('./analysis');
+const BattlePass = require('./battlepass');
+const Shop = require('./shop');
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'doz-dev-secret-change-in-prod';
@@ -66,6 +68,10 @@ const friends = Friends.create(store);
 const tournament = Tournament.create(io, store, presence, GameRoom, ELO);
 const league = League.create(io, store);
 const spectator = Spectator.create(io);
+
+// Battle Pass and Shop (v7)
+const battlepass = BattlePass.create(io, store);
+const shop = Shop.create(io, store, battlepass);
 
 // Auth middleware for friend routes
 function authMiddleware(req, res, next) {
@@ -180,6 +186,51 @@ app.post('/api/analysis', (req, res) => {
     }
     const result = Analysis.analyzeGame(moves, boardSize || 3);
     res.json(result);
+});
+
+/* ---------- Shop routes (v7) ---------- */
+
+app.get('/api/shop/items', (req, res) => {
+    res.json(shop.getItems());
+});
+
+app.get('/api/shop/coins', authMiddleware, (req, res) => {
+    res.json({ coins: shop.getCoins(req.username) });
+});
+
+app.get('/api/shop/inventory', authMiddleware, (req, res) => {
+    res.json({ inventory: shop.getInventory(req.username), equipped: shop.getEquipped(req.username) });
+});
+
+app.post('/api/shop/purchase', authMiddleware, (req, res) => {
+    const { itemId } = req.body;
+    const result = shop.purchase(req.username, itemId);
+    if (result.ok) res.json(result);
+    else res.status(400).json({ error: result.error });
+});
+
+app.post('/api/shop/equip', authMiddleware, (req, res) => {
+    const { type, value } = req.body;
+    const result = shop.equipItem(req.username, type, value);
+    if (result.ok) res.json(result);
+    else res.status(400).json({ error: result.error });
+});
+
+/* ---------- Battle Pass routes (v7) ---------- */
+
+app.get('/api/battlepass', authMiddleware, (req, res) => {
+    res.json(battlepass.getUserPass(req.username));
+});
+
+app.get('/api/battlepass/info', (req, res) => {
+    res.json(battlepass.getPassInfo());
+});
+
+app.post('/api/battlepass/claim', authMiddleware, (req, res) => {
+    const { track, level } = req.body;
+    const result = battlepass.claimReward(req.username, track, level);
+    if (result.ok) res.json(result);
+    else res.status(400).json({ error: result.error });
 });
 
 // HTTP server
@@ -356,6 +407,14 @@ GameRoom.onGameEnd = (room, winner, loser, isDraw) => {
 
     // Notify spectator room (v6)
     spectator.finishGame(room.id, isDraw ? null : room.winner, room.line || null);
+
+    // Award coins and battle pass XP (v7)
+    const winnerReward = isDraw ? 10 : 30;
+    const loserReward = isDraw ? 10 : 5;
+    shop.awardCoins(winnerUser.username, winnerReward);
+    shop.awardCoins(loserUser.username, loserReward);
+    battlepass.addXp(winnerUser.username, isDraw ? 50 : 100);
+    battlepass.addXp(loserUser.username, isDraw ? 50 : 30);
 
     // Cleanup room after delay
     setTimeout(() => gameRooms.delete(room.id), 60000);

@@ -415,6 +415,71 @@ const Online = (function () {
         return resp.json();
     }
 
+    /* ---------- Shop (v7) ---------- */
+
+    async function getShopItems() {
+        const resp = await fetch(getServerUrl() + '/api/shop/items');
+        return resp.json();
+    }
+
+    async function getCoins() {
+        return apiGet('/api/shop/coins');
+    }
+
+    async function getInventory() {
+        return apiGet('/api/shop/inventory');
+    }
+
+    async function purchaseItem(itemId) {
+        const resp = await fetch(getServerUrl() + '/api/shop/purchase', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ itemId }),
+        });
+        if (!resp.ok) throw new Error((await resp.json()).error || 'Purchase failed');
+        return resp.json();
+    }
+
+    async function equipItem(type, value) {
+        const resp = await fetch(getServerUrl() + '/api/shop/equip', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ type, value }),
+        });
+        if (!resp.ok) throw new Error((await resp.json()).error || 'Equip failed');
+        return resp.json();
+    }
+
+    /* ---------- Battle Pass (v7) ---------- */
+
+    async function getBattlePass() {
+        return apiGet('/api/battlepass');
+    }
+
+    async function getBattlePassInfo() {
+        const resp = await fetch(getServerUrl() + '/api/battlepass/info');
+        return resp.json();
+    }
+
+    async function claimBattlePassReward(track, level) {
+        const resp = await fetch(getServerUrl() + '/api/battlepass/claim', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ track, level }),
+        });
+        if (!resp.ok) throw new Error((await resp.json()).error || 'Claim failed');
+        return resp.json();
+    }
+
     /* ---------- Set handlers ---------- */
 
     function on(event, handler) {
@@ -461,6 +526,15 @@ const Online = (function () {
         spectateLeave,
         spectateEmote,
         analyzeGame,
+        // v7
+        getShopItems,
+        getCoins,
+        getInventory,
+        purchaseItem,
+        equipItem,
+        getBattlePass,
+        getBattlePassInfo,
+        claimBattlePassReward,
         on,
         getServerUrl,
         setServerUrl,

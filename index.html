@@ -85,6 +85,17 @@
                             <span class="btn-icon">👁️</span>
                             <span class="btn-text">تماشا</span>
                         </button>
+                        <button class="btn btn-secondary" data-action="go-shop">
+                            <span class="btn-icon">🛒</span>
+                            <span class="btn-text">فروشگاه</span>
+                            <span class="badge" id="coinsBadge" style="display:none;background:#f59e0b;color:#000">۰</span>
+                        </button>
+                    </div>
+                    <div class="menu-row">
+                        <button class="btn btn-secondary" data-action="go-battlepass">
+                            <span class="btn-icon">🎖️</span>
+                            <span class="btn-text">Battle Pass</span>
+                        </button>
                         <button class="btn btn-secondary" data-action="go-stats">
                             <span class="btn-icon">📊</span>
                             <span class="btn-text">آمار</span>
@@ -128,7 +139,7 @@
                 </div>
 
                 <div class="home-footer">
-                    <span class="version"><bdi>نسخه ۶.۰.۰</bdi></span>
+                    <span class="version"><bdi>نسخه ۷.۰.۰</bdi></span>
                     <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم" title="تغییر تم">
                         <span class="theme-icon-light">☀</span>
                         <span class="theme-icon-dark">☾</span>
@@ -1115,6 +1126,51 @@ p>
                 </div>
             </div>
         </div>
+
+        <!-- ============ SHOP SCREEN ============ -->
+        <section class="screen" id="shopScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">فروشگاه</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="shop-container">
+                <div class="shop-coins-bar" id="shopCoinsBar">
+                    <span class="coins-icon">🪙</span>
+                    <span class="coins-value" id="shopCoinsValue">۰</span>
+                    <span class="coins-label">کوین</span>
+                </div>
+
+                <div class="shop-tabs">
+                    <button class="shop-tab active" data-shop-tab="avatars">آواتارها</button>
+                    <button class="shop-tab" data-shop-tab="themes">تم‌ها</button>
+                    <button class="shop-tab" data-shop-tab="emotes">اموجی</button>
+                    <button class="shop-tab" data-shop-tab="inventory">کیف من</button>
+                </div>
+
+                <div class="shop-items-grid" id="shopItemsGrid">
+                    <!-- Will be filled dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ BATTLE PASS SCREEN ============ -->
+        <section class="screen" id="battlepassScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">Battle Pass</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="battlepass-container" id="battlepassContainer">
+                <!-- Will be filled dynamically -->
+            </div>
+        </section>
 
     </div>
 

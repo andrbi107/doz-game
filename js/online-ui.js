@@ -1163,6 +1163,261 @@ const OnlineUI = (function () {
         if (modal) modal.classList.remove('active');
     }
 
+    /* ---------- Shop screen (v7) ---------- */
+
+    let shopCurrentTab = 'avatars';
+
+    async function showShop() {
+        UI.showScreen('shop');
+        await refreshShop();
+        // Setup tabs
+        document.querySelectorAll('.shop-tab').forEach(tab => {
+            tab.onclick = () => {
+                shopCurrentTab = tab.dataset.shopTab;
+                document.querySelectorAll('.shop-tab').forEach(t => t.classList.toggle('active', t === tab));
+                renderShopItems();
+            };
+        });
+    }
+
+    async function refreshShop() {
+        const coinsEl = $('#shopCoinsValue');
+        if (!coinsEl) return;
+        if (!Online.isLoggedIn()) {
+            coinsEl.textContent = '۰';
+            $('#shopItemsGrid').innerHTML = '<p class="empty-state">برای خرید وارد شوید</p>';
+            return;
+        }
+        try {
+            const coinsData = await Online.getCoins();
+            coinsEl.textContent = toPersianDigits(coinsData.coins || 0);
+            // Update home badge
+            const badge = document.getElementById('coinsBadge');
+            if (badge && coinsData.coins > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = toPersianDigits(coinsData.coins);
+            }
+        } catch (e) {
+            coinsEl.textContent = '۰';
+        }
+        await renderShopItems();
+    }
+
+    async function renderShopItems() {
+        const grid = $('#shopItemsGrid');
+        if (!grid) return;
+        grid.innerHTML = '<p class="empty-state">در حال بارگذاری...</p>';
+        try {
+            if (shopCurrentTab === 'inventory') {
+                // Show inventory
+                const invData = await Online.getInventory();
+                const inventory = invData.inventory || [];
+                const equipped = invData.equipped || {};
+                if (inventory.length === 0) {
+                    grid.innerHTML = '<p class="empty-state">کیف شما خالی است</p>';
+                    return;
+                }
+                grid.innerHTML = '';
+                inventory.forEach(item => {
+                    const isEquipped = equipped[item.type] === item.value;
+                    const card = document.createElement('div');
+                    card.className = 'shop-item-card' + (isEquipped ? ' equipped' : '');
+                    const preview = item.type === 'theme'
+                        ? `<div style="width:40px;height:40px;border-radius:50%;background:var(--accent);margin:0 auto 8px"></div>`
+                        : `<div class="shop-item-preview">${item.value}</div>`;
+                    card.innerHTML = `
+                        ${preview}
+                        <div class="shop-item-name">${escapeHtml(item.name)}</div>
+                        <div class="shop-item-rarity rarity-${item.type}">${item.type}</div>
+                        <div class="shop-item-actions">
+                            ${isEquipped
+                                ? '<button class="btn btn-ghost" disabled>فعال</button>'
+                                : `<button class="btn btn-primary" data-equip-type="${item.type}" data-equip-value="${item.value}">فعال‌کردن</button>`
+                            }
+                        </div>
+                    `;
+                    const btn = card.querySelector('[data-equip-type]');
+                    if (btn) {
+                        btn.onclick = () => equipShopItem(btn.dataset.equipType, btn.dataset.equipValue);
+                    }
+                    grid.appendChild(card);
+                });
+                return;
+            }
+            // Show shop items filtered by tab
+            const items = await Online.getShopItems();
+            const invData = Online.isLoggedIn() ? await Online.getInventory().catch(() => ({ inventory: [] })) : { inventory: [] };
+            const ownedItems = (invData.inventory || []).map(i => i.type + ':' + i.value);
+            const coins = Online.isLoggedIn() ? (await Online.getCoins().catch(() => ({ coins: 0 }))).coins : 0;
+            const filtered = items.filter(i => {
+                if (shopCurrentTab === 'avatars') return i.type === 'avatar';
+                if (shopCurrentTab === 'themes') return i.type === 'theme';
+                if (shopCurrentTab === 'emotes') return i.type === 'emote';
+                return false;
+            });
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p class="empty-state">آیتمی یافت نشد</p>';
+                return;
+            }
+            grid.innerHTML = '';
+            filtered.forEach(item => {
+                const owned = ownedItems.includes(item.type + ':' + item.value);
+                const affordable = coins >= item.price;
+                const card = document.createElement('div');
+                card.className = 'shop-item-card' + (owned ? ' owned' : '');
+                const preview = item.type === 'theme'
+                    ? `<div style="width:40px;height:40px;border-radius:50%;background:var(--swatch-color, var(--accent));margin:0 auto 8px;background:${getThemeColor(item.value)}</div>`
+                    : `<div class="shop-item-preview">${item.value}</div>`;
+                card.innerHTML = `
+                    ${preview}
+                    <div class="shop-item-name">${escapeHtml(item.name)}</div>
+                    <div class="shop-item-rarity rarity-${item.rarity}">${item.rarity}</div>
+                    <div class="shop-item-price ${affordable ? '' : 'unaffordable'}">🪙 ${toPersianDigits(item.price)}</div>
+                    <div class="shop-item-actions">
+                        ${owned
+                            ? '<button class="btn btn-ghost" disabled>دارد</button>'
+                            : `<button class="btn btn-primary" data-item-id="${item.id}" ${affordable ? '' : 'disabled'}>خرید</button>`
+                        }
+                    </div>
+                `;
+                const btn = card.querySelector('[data-item-id]');
+                if (btn) {
+                    btn.onclick = () => purchaseShopItem(item.id, item.name);
+                }
+                grid.appendChild(card);
+            });
+        } catch (e) {
+            grid.innerHTML = '<p class="empty-state">سرور در دسترس نیست</p>';
+        }
+    }
+
+    function getThemeColor(value) {
+        const colors = {
+            indigo: '#6366f1', emerald: '#10b981', rose: '#f43f5e',
+            amber: '#f59e0b', cyan: '#06b6d4', violet: '#8b5cf6',
+        };
+        return colors[value] || 'var(--accent)';
+    }
+
+    async function purchaseShopItem(itemId, itemName) {
+        try {
+            const result = await Online.purchaseItem(itemId);
+            if (UI && UI.toast) UI.toast(`${itemName} خریداری شد! 🎉`);
+            await refreshShop();
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
+    async function equipShopItem(type, value) {
+        try {
+            await Online.equipItem(type, value);
+            if (UI && UI.toast) UI.toast('فعال شد!');
+            await renderShopItems();
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
+    /* ---------- Battle Pass screen (v7) ---------- */
+
+    async function showBattlePass() {
+        UI.showScreen('battlepass');
+        const container = $('#battlepassContainer');
+        if (!container) return;
+        container.innerHTML = '<p class="empty-state">در حال بارگذاری...</p>';
+        if (!Online.isLoggedIn()) {
+            container.innerHTML = '<p class="empty-state">برای مشاهده Battle Pass وارد شوید</p>';
+            return;
+        }
+        try {
+            const [info, bp] = await Promise.all([
+                Online.getBattlePassInfo(),
+                Online.getBattlePass(),
+            ]);
+            const progress = bp.progress || 0;
+            container.innerHTML = `
+                <div class="bp-header">
+                    <div class="bp-season-num">Battle Pass فصل ${toPersianDigits(info.season)}</div>
+                    <div class="bp-level-display">لول ${toPersianDigits(bp.level)}</div>
+                    <div class="bp-level-label">${toPersianDigits(info.daysLeft)} روز تا پایان</div>
+                    <div class="bp-progress-bar">
+                        <div class="bp-progress-fill" style="width:${progress * 100}%"></div>
+                    </div>
+                    <div class="bp-progress-text">${toPersianDigits(bp.xpInLevel)} / ${toPersianDigits(bp.xpForNext)} XP</div>
+                </div>
+                <div class="bp-premium-banner ${bp.premium ? 'active' : ''}">
+                    <div class="bp-premium-icon">${bp.premium ? '✅' : '👑'}</div>
+                    <div class="bp-premium-info">
+                        <div class="bp-premium-title">${bp.premium ? 'پرمیوم فعال' : 'پرمیوم فعال نیست'}</div>
+                        <div class="bp-premium-desc">${bp.premium ? 'از تمام پاداش‌ها استفاده کنید' : 'برای پاداش‌های ویژه، از فروشگاه پرمیوم بخرید'}</div>
+                    </div>
+                    ${!bp.premium ? '<button class="btn btn-primary btn-sm" data-action="go-shop">خرید</button>' : ''}
+                </div>
+                <div class="bp-tracks">
+                    <div class="bp-track-header level">لول</div>
+                    <div class="bp-track-header free">رایگان</div>
+                    <div class="bp-track-header premium">پرمیوم</div>
+                    ${renderBpLevels(bp)}
+                </div>
+            `;
+            // Bind claim buttons
+            container.querySelectorAll('[data-claim-track]').forEach(btn => {
+                btn.onclick = () => claimBpReward(btn.dataset.claimTrack, parseInt(btn.dataset.claimLevel, 10));
+            });
+        } catch (e) {
+            container.innerHTML = '<p class="empty-state">سرور در دسترس نیست</p>';
+        }
+    }
+
+    function renderBpLevels(bp) {
+        let html = '';
+        const maxLevels = bp.maxLevel || 50;
+        for (let lvl = 1; lvl <= maxLevels; lvl++) {
+            const freeReward = bp.freeRewards.find(r => r.level === lvl);
+            const premReward = bp.premiumRewards.find(r => r.level === lvl);
+            const freeClaimed = bp.claimed && bp.claimed.free && bp.claimed.free.includes(lvl);
+            const premClaimed = bp.claimed && bp.claimed.premium && bp.claimed.premium.includes(lvl);
+            const levelReached = bp.level >= lvl;
+            const premUnlocked = bp.premium;
+            html += `
+                <div class="bp-level-cell">${toPersianDigits(lvl)}</div>
+                ${renderBpCell(freeReward, freeClaimed, levelReached, true, lvl, 'free')}
+                ${renderBpCell(premReward, premClaimed, levelReached && premUnlocked, premUnlocked, lvl, 'premium')}
+            `;
+        }
+        return html;
+    }
+
+    function renderBpCell(reward, claimed, canClaim, unlocked, level, track) {
+        if (!reward) return '<div class="bp-reward-cell">—</div>';
+        const classes = ['bp-reward-cell', track];
+        if (claimed) classes.push('claimed');
+        else if (canClaim) classes.push('claimable');
+        else if (!unlocked) classes.push('locked');
+        const icon = reward.type === 'coins' ? '🪙' : reward.value;
+        return `
+            <div class="${classes.join(' ')}" data-claim-track="${track}" data-claim-level="${level}">
+                <div class="bp-reward-icon">${icon}</div>
+                <div class="bp-reward-name">${escapeHtml(reward.name)}</div>
+                ${claimed ? '<div style="font-size:8px;color:var(--success)">✓ گرفته شد</div>' : ''}
+                ${canClaim && !claimed ? '<div style="font-size:8px;color:var(--success)">claim کنید!</div>' : ''}
+            </div>
+        `;
+    }
+
+    async function claimBpReward(track, level) {
+        try {
+            const result = await Online.claimBattlePassReward(track, level);
+            if (result.reward) {
+                if (UI && UI.toast) UI.toast(`پاداش دریافت شد: ${result.reward.name} 🎉`);
+            }
+            await showBattlePass();
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
     return {
         init,
         showAuth,
@@ -1205,5 +1460,8 @@ const OnlineUI = (function () {
         handleSpectateMove,
         handleSpectateEnd,
         handleSpectateEmote,
+        // v7
+        showShop,
+        showBattlePass,
     };
 })();
