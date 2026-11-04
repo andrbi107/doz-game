@@ -1,0 +1,140 @@
+/* ============================================
+   THEMES.CSS - Theme variables for Doz game
+   ============================================ */
+
+:root {
+    /* Default: dark theme */
+    --bg-gradient-1: #0f0f1e;
+    --bg-gradient-2: #1a1a2e;
+    --bg-gradient-3: #16213e;
+
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-elevated: rgba(255, 255, 255, 0.08);
+    --surface-hover: rgba(255, 255, 255, 0.12);
+
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+
+    /* Accent color (controlled by .theme-color-* on body) */
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --accent-soft: rgba(99, 102, 241, 0.15);
+    --accent-glow: rgba(99, 102, 241, 0.4);
+
+    /* Player marks */
+    --x-color: #6366f1;
+    --x-glow: rgba(99, 102, 241, 0.5);
+    --o-color: #f43f5e;
+    --o-glow: rgba(244, 63, 94, 0.5);
+
+    /* States */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+
+    /* Sizing */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 32px var(--accent-glow);
+
+    /* Typography */
+    --font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+
+    /* Board sizing */
+    --board-size: min(420px, 90vw, 90vh - 280px);
+    --cell-gap: 8px;
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Light theme overrides */
+body.theme-light {
+    --bg-gradient-1: #f1f5f9;
+    --bg-gradient-2: #e2e8f0;
+    --bg-gradient-3: #cbd5e1;
+
+    --surface: rgba(255, 255, 255, 0.7);
+    --surface-elevated: rgba(255, 255, 255, 0.9);
+    --surface-hover: rgba(255, 255, 255, 1);
+
+    --border: rgba(15, 23, 42, 0.08);
+    --border-strong: rgba(15, 23, 42, 0.16);
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
+    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.1);
+    --shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.15);
+}
+
+/* Accent color variants */
+body.theme-color-indigo {
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --accent-soft: rgba(99, 102, 241, 0.15);
+    --accent-glow: rgba(99, 102, 241, 0.4);
+    --x-color: #6366f1;
+    --x-glow: rgba(99, 102, 241, 0.5);
+}
+
+body.theme-color-emerald {
+    --accent: #10b981;
+    --accent-hover: #34d399;
+    --accent-soft: rgba(16, 185, 129, 0.15);
+    --accent-glow: rgba(16, 185, 129, 0.4);
+    --x-color: #10b981;
+    --x-glow: rgba(16, 185, 129, 0.5);
+}
+
+body.theme-color-rose {
+    --accent: #f43f5e;
+    --accent-hover: #fb7185;
+    --accent-soft: rgba(244, 63, 94, 0.15);
+    --accent-glow: rgba(244, 63, 94, 0.4);
+    --o-color: #6366f1;
+    --o-glow: rgba(99, 102, 241, 0.5);
+}
+
+body.theme-color-amber {
+    --accent: #f59e0b;
+    --accent-hover: #fbbf24;
+    --accent-soft: rgba(245, 158, 11, 0.15);
+    --accent-glow: rgba(245, 158, 11, 0.4);
+    --x-color: #f59e0b;
+    --x-glow: rgba(245, 158, 11, 0.5);
+}
+
+body.theme-color-cyan {
+    --accent: #06b6d4;
+    --accent-hover: #22d3ee;
+    --accent-soft: rgba(6, 182, 212, 0.15);
+    --accent-glow: rgba(6, 182, 212, 0.4);
+    --x-color: #06b6d4;
+    --x-glow: rgba(6, 182, 212, 0.5);
+}
+
+body.theme-color-violet {
+    --accent: #8b5cf6;
+    --accent-hover: #a78bfa;
+    --accent-soft: rgba(139, 92, 246, 0.15);
+    --accent-glow: rgba(139, 92, 246, 0.4);
+    --x-color: #8b5cf6;
+    --x-glow: rgba(139, 92, 246, 0.5);
+}

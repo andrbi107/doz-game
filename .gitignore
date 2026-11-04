@@ -1,0 +1,30 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies (in case someone adds tooling later)
+node_modules/
+
+# Build artifacts (none for this project, but ignore anyway)
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# Lockfiles (this is a static site, no deps)
+package-lock.json
+yarn.lock

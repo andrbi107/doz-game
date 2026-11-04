@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f0f1e">
+    <meta name="description" content="بازی دوز حرفه‌ای - چند نفره و بازی با هوش مصنوعی">
+    <title>دوز | Doz Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366f1'/><text x='50' y='72' font-size='60' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>د</text></svg>">
+</head>
+<body>
+    <!-- Background particles -->
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <!-- App Container -->
+    <div class="app" id="app">
+
+        <!-- ============ HOME SCREEN ============ -->
+        <section class="screen active" id="homeScreen">
+            <div class="home-container">
+                <div class="logo-wrap">
+                    <div class="logo-icon">
+                        <div class="logo-grid">
+                            <span class="cell-x">×</span>
+                            <span class="cell-o">○</span>
+                            <span class="cell-x">×</span>
+                            <span class="cell-o">○</span>
+                            <span class="cell-x">×</span>
+                            <span class="cell-o">○</span>
+                            <span class="cell-x">×</span>
+                            <span class="cell-o">○</span>
+                            <span class="cell-x">×</span>
+                        </div>
+                    </div>
+                    <h1 class="logo-text">دوز</h1>
+                    <p class="logo-subtitle">DOZ · بازی کلاسیک، تجربه‌ای مدرن</p>
+                </div>
+
+                <div class="menu-buttons">
+                    <button class="btn btn-primary btn-large" data-action="go-mode-select">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-text">شروع بازی</span>
+                    </button>
+                    <button class="btn btn-secondary btn-large" data-action="go-stats">
+                        <span class="btn-icon">📊</span>
+                        <span class="btn-text">آمار</span>
+                    </button>
+                    <button class="btn btn-secondary btn-large" data-action="go-settings">
+                        <span class="btn-icon">⚙</span>
+                        <span class="btn-text">تنظیمات</span>
+                    </button>
+                    <button class="btn btn-secondary btn-large" data-action="go-help">
+                        <span class="btn-icon">؟</span>
+                        <span class="btn-text">راهنما</span>
+                    </button>
+                </div>
+
+                <div class="home-footer">
+                    <span class="version"><bdi>نسخه ۱.۰.۰</bdi></span>
+                    <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم" title="تغییر تم">
+                        <span class="theme-icon-light">☀</span>
+                        <span class="theme-icon-dark">☾</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ MODE SELECT SCREEN ============ -->
+        <section class="screen" id="modeSelectScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">انتخاب حالت بازی</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="mode-cards">
+                <button class="mode-card" data-action="select-mode" data-mode="pvp">
+                    <div class="mode-card-icon">
+                        <span>👥</span>
+                    </div>
+                    <h3 class="mode-card-title">دو نفره</h3>
+                    <p class="mode-card-desc">روی یک دستگاه با دو بازیکن بازی کنید</p>
+                </button>
+
+                <button class="mode-card" data-action="select-mode" data-mode="ai-easy">
+                    <div class="mode-card-icon">
+                        <span>🤖</span>
+                    </div>
+                    <h3 class="mode-card-title">در برابر ربات</h3>
+                    <p class="mode-card-desc">با هوش مصنوعی در سه سطح بازی کنید</p>
+                    <div class="difficulty-pills">
+                        <span class="pill pill-easy active" data-diff="easy">آسان</span>
+                        <span class="pill pill-medium" data-diff="medium">متوسط</span>
+                        <span class="pill pill-hard" data-diff="hard">سخت</span>
+                    </div>
+                </button>
+
+                <button class="mode-card" data-action="select-mode" data-mode="tournament">
+                    <div class="mode-card-icon">
+                        <span>🏆</span>
+                    </div>
+                    <h3 class="mode-card-title">تورنمنت</h3>
+                    <p class="mode-card-desc">تورنمنت حذفی بین چند بازیکن</p>
+                </button>
+            </div>
+        </section>
+
+        <!-- ============ SETUP SCREEN (player names) ============ -->
+        <section class="screen" id="setupScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-mode-select" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">تنظیم بازی</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="setup-container">
+                <div class="player-setup-card player-x">
+                    <div class="player-mark mark-x">×</div>
+                    <label class="form-label">نام بازیکن اول (X)</label>
+                    <input type="text" class="form-input" id="player1Name" maxlength="20" placeholder="بازیکن ۱">
+                </div>
+
+                <div class="vs-divider">VS</div>
+
+                <div class="player-setup-card player-o" id="player2SetupCard">
+                    <div class="player-mark mark-o">○</div>
+                    <label class="form-label" id="player2Label">نام بازیکن دوم (O)</label>
+                    <input type="text" class="form-input" id="player2Name" maxlength="20" placeholder="بازیکن ۲">
+                </div>
+
+                <div class="setup-options">
+                    <div class="option-row">
+                        <label class="option-label">تعداد برد برای پیروزی نهایی</label>
+                        <div class="segmented-control" id="winTargetControl">
+                            <button class="seg-btn active" data-value="1">۱</button>
+                            <button class="seg-btn" data-value="3">۳</button>
+                            <button class="seg-btn" data-value="5">۵</button>
+                            <button class="seg-btn" data-value="7">۷</button>
+                        </div>
+                    </div>
+
+                    <div class="option-row" id="starterRow">
+                        <label class="option-label">شروع‌کننده</label>
+                        <div class="segmented-control" id="starterControl">
+                            <button class="seg-btn" data-value="x">X</button>
+                            <button class="seg-btn active" data-value="random">تصادفی</button>
+                            <button class="seg-btn" data-value="o">O</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-large btn-start" data-action="start-game">
+                    <span class="btn-text">شروع!</span>
+                    <span class="btn-icon">←</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ============ GAME SCREEN ============ -->
+        <section class="screen" id="gameScreen">
+            <div class="screen-header game-header">
+                <button class="btn-icon-back" data-action="quit-game" aria-label="خروج">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title" id="matchTitle">بازی</h2>
+                <button class="btn-icon-back" data-action="restart-game" aria-label="شروع دوباره">
+                    <span>↻</span>
+                </button>
+            </div>
+
+            <!-- Score bar -->
+            <div class="score-bar">
+                <div class="score-card score-card-x" id="scoreCardX">
+                    <div class="score-mark">×</div>
+                    <div class="score-name" id="scoreNameX">بازیکن ۱</div>
+                    <div class="score-value" id="scoreValueX">0</div>
+                </div>
+                <div class="score-divider">
+                    <div class="round-info">
+                        <span class="round-label">دور</span>
+                        <span class="round-number" id="roundNumber">1</span>
+                    </div>
+                    <div class="draws-info">
+                        <span class="draws-label">مساوی</span>
+                        <span class="draws-value" id="drawsValue">0</span>
+                    </div>
+                </div>
+                <div class="score-card score-card-o" id="scoreCardO">
+                    <div class="score-mark">○</div>
+                    <div class="score-name" id="scoreNameO">بازیکن ۲</div>
+                    <div class="score-value" id="scoreValueO">0</div>
+                </div>
+            </div>
+
+            <!-- Turn indicator -->
+            <div class="turn-indicator" id="turnIndicator">
+                <div class="turn-pulse"></div>
+                <span class="turn-text" id="turnText">نوبت: <strong>بازیکن ۱</strong></span>
+            </div>
+
+            <!-- Board -->
+            <div class="board-wrap">
+                <div class="board" id="board">
+                    <div class="cell" data-index="0"></div>
+                    <div class="cell" data-index="1"></div>
+                    <div class="cell" data-index="2"></div>
+                    <div class="cell" data-index="3"></div>
+                    <div class="cell" data-index="4"></div>
+                    <div class="cell" data-index="5"></div>
+                    <div class="cell" data-index="6"></div>
+                    <div class="cell" data-index="7"></div>
+                    <div class="cell" data-index="8"></div>
+                </div>
+                <div class="winning-line" id="winningLine"></div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="game-actions">
+                <button class="btn btn-ghost btn-sm" data-action="undo-move" id="undoBtn">
+                    <span class="btn-icon">↶</span>
+                    <span class="btn-text">برگشت</span>
+                </button>
+                <button class="btn btn-ghost btn-sm" data-action="toggle-sound" id="soundBtn">
+                    <span class="btn-icon">🔊</span>
+                    <span class="btn-text">صدا</span>
+                </button>
+                <button class="btn btn-ghost btn-sm" data-action="toggle-hints" id="hintsBtn">
+                    <span class="btn-icon">💡</span>
+                    <span class="btn-text">راهنما</span>
+                </button>
+            </div>
+
+            <!-- Move history -->
+            <div class="history-panel" id="historyPanel">
+                <div class="history-header">
+                    <span>تاریخچه حرکات</span>
+                    <button class="history-toggle" data-action="toggle-history">▲</button>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+        </section>
+
+        <!-- ============ MATCH END MODAL ============ -->
+        <div class="modal-overlay" id="roundEndModal">
+            <div class="modal">
+                <div class="modal-icon" id="roundEndIcon">🎉</div>
+                <h2 class="modal-title" id="roundEndTitle">پیروزی!</h2>
+                <p class="modal-subtitle" id="roundEndSubtitle">بازیکن ۱ برنده شد</p>
+                <div class="modal-stats" id="roundEndStats"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-action="quit-game">منوی اصلی</button>
+                    <button class="btn btn-primary" data-action="next-round">دور بعدی</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ MATCH (series) END MODAL ============ -->
+        <div class="modal-overlay" id="matchEndModal">
+            <div class="modal modal-celebrate">
+                <div class="celebrate-confetti" id="celebrateConfetti"></div>
+                <div class="trophy">🏆</div>
+                <h2 class="modal-title" id="matchEndTitle">قهرمان!</h2>
+                <p class="modal-subtitle" id="matchEndSubtitle">بازیکن ۱ قهرمان شد</p>
+                <div class="modal-stats" id="matchEndStats"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" data-action="go-home">منوی اصلی</button>
+                    <button class="btn btn-primary" data-action="rematch">بازی دوباره</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ STATS SCREEN ============ -->
+        <section class="screen" id="statsScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">آمار</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="stats-container">
+                <div class="stats-grid">
+                    <div class="stat-tile">
+                        <div class="stat-value" id="statTotalGames">0</div>
+                        <div class="stat-label">کل بازی‌ها</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-value" id="statWins">0</div>
+                        <div class="stat-label">برد</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-value" id="statLosses">0</div>
+                        <div class="stat-label">باخت</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-value" id="statDraws">0</div>
+                        <div class="stat-label">مساوی</div>
+                    </div>
+                    <div class="stat-tile stat-tile-wide">
+                        <div class="stat-value" id="statWinRate">0٪</div>
+                        <div class="stat-label">درصد برد</div>
+                    </div>
+                    <div class="stat-tile stat-tile-wide">
+                        <div class="stat-value" id="statStreak">0</div>
+                        <div class="stat-label">بهترین سری برد</div>
+                    </div>
+                </div>
+
+                <div class="leaderboard">
+                    <h3 class="section-title">جدول برترین‌ها</h3>
+                    <div class="leaderboard-list" id="leaderboardList">
+                        <p class="empty-state">هنوز بازی‌ای ثبت نشده</p>
+                    </div>
+                </div>
+
+                <div class="stats-actions">
+                    <button class="btn btn-danger" data-action="reset-stats">پاک کردن آمار</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ SETTINGS SCREEN ============ -->
+        <section class="screen" id="settingsScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">تنظیمات</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="settings-container">
+                <div class="setting-group">
+                    <h3 class="setting-group-title">ظاهر</h3>
+                    <div class="setting-row">
+                        <span class="setting-label">تم</span>
+                        <div class="segmented-control" id="themeControl">
+                            <button class="seg-btn" data-value="light">روشن</button>
+                            <button class="seg-btn active" data-value="dark">تیره</button>
+                            <button class="seg-btn" data-value="auto">سیستم</button>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">رنگ صفحه</span>
+                        <div class="color-swatches" id="boardColorSwatches">
+                            <button class="swatch active" data-color="indigo" style="--swatch-color:#6366f1"></button>
+                            <button class="swatch" data-color="emerald" style="--swatch-color:#10b981"></button>
+                            <button class="swatch" data-color="rose" style="--swatch-color:#f43f5e"></button>
+                            <button class="swatch" data-color="amber" style="--swatch-color:#f59e0b"></button>
+                            <button class="swatch" data-color="cyan" style="--swatch-color:#06b6d4"></button>
+                            <button class="swatch" data-color="violet" style="--swatch-color:#8b5cf6"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3 class="setting-group-title">صدا</h3>
+                    <div class="setting-row">
+                        <span class="setting-label">صدا</span>
+                        <label class="switch">
+                            <input type="checkbox" id="soundEnabled" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">میزان صدا</span>
+                        <input type="range" class="range" id="volumeRange" min="0" max="100" value="60">
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3 class="setting-group-title">گیم‌پلی</h3>
+                    <div class="setting-row">
+                        <span class="setting-label">انیمیشن حرکات</span>
+                        <label class="switch">
+                            <input type="checkbox" id="animationsEnabled" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">لرزش صفحه</span>
+                        <label class="switch">
+                            <input type="checkbox" id="hapticsEnabled" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">نمایش راهنما</span>
+                        <label class="switch">
+                            <input type="checkbox" id="hintsEnabled">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ HELP SCREEN ============ -->
+        <section class="screen" id="helpScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">راهنما</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="help-container">
+                <div class="help-card">
+                    <h3 class="help-card-title">🎯 هدف بازی</h3>
+                    <p class="help-card-text">
+                        سه مهره خود را به‌صورت افقی، عمودی یا قطری روی صفحه ۳×۳ قرار دهید تا برنده شوید.
+                    </p>
+                </div>
+
+                <div class="help-card">
+                    <h3 class="help-card-title">🎮 نحوه بازی</h>
+p>
+                    <ul class="help-list">
+                        <li>بازیکن X همیشه اول شروع می‌کند (مگر اینکه تنظیمات دیگری انتخاب شده باشد).</li>
+                        <li>روی هر خانه خالی ضربه بزنید تا مهره شما قرار گیرد.</li>
+                        <li>نوبت‌ها به‌ترتیب بین دو بازیکن جابه‌جا می‌شود.</li>
+                        <li>اگر تمام خانه‌ها پر شود و هیچ‌کس برنده نشود، بازی مساوی می‌شود.</li>
+                    </ul>
+                </div>
+
+                <div class="help-card">
+                    <h3 class="help-card-title">🤖 حالت ربات</h3>
+                    <p class="help-card-text">
+                        در سه سطح می‌توانید با ربات بازی کنید:
+                    </p>
+                    <ul class="help-list">
+                        <li><strong>آسان:</strong> ربات تصادفی حرکت می‌کند.</li>
+                        <li><strong>متوسط:</strong> ربات گاهی اشتباه می‌کند.</li>
+                        <li><strong>سخت:</strong> ربات با الگوریتم Minimax شکست‌ناپذیر است!</li>
+                    </ul>
+                </div>
+
+                <div class="help-card">
+                    <h3 class="help-card-title">⌨️ میان‌برهای صفحه‌کلید</h3>
+                    <ul class="help-list">
+                        <li><kbd>۱</kbd> تا <kbd>۹</kbd>: انتخاب خانه (شبیه صفحه‌کلید عددی)</li>
+                        <li><kbd>U</kbd>: برگشت آخرین حرکت</li>
+                        <li><kbd>R</kbd>: شروع دوباره</li>
+                        <li><kbd>Esc</kbd>: خروج به منوی اصلی</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
