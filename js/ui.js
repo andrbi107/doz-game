@@ -19,6 +19,9 @@ const UI = (function () {
         replay: $('#replayScreen'),
         online: $('#onlineScreen'),
         onlineGame: $('#onlineGameScreen'),
+        friends: $('#friendsScreen'),
+        profile: $('#profileScreen'),
+        leaderboard: $('#leaderboardScreen'),
     };
 
     const els = {

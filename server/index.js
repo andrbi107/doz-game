@@ -14,6 +14,7 @@ const Matchmaker = require('./matchmaker');
 const GameRoom = require('./gameroom');
 const Presence = require('./presence');
 const ELO = require('./elo');
+const Friends = require('./friends');
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'doz-dev-secret-change-in-prod';
@@ -52,6 +53,68 @@ app.get('/api/leaderboard', (req, res) => {
         .sort((a, b) => b.elo - a.elo)
         .slice(0, 100);
     res.json(board);
+});
+
+// Friends routes (v5)
+const friends = Friends.create(store);
+
+// Auth middleware for friend routes
+function authMiddleware(req, res, next) {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'احراز هویت الزامی است' });
+    }
+    const token = auth.substring(7);
+    try {
+        const payload = Auth.verifyToken(token, JWT_SECRET);
+        req.username = payload.username;
+        next();
+    } catch (e) {
+        return res.status(401).json({ error: 'توکن نامعتبر' });
+    }
+}
+
+app.get('/api/friends', authMiddleware, (req, res) => {
+    res.json(friends.getFriends(req.username));
+});
+
+app.get('/api/friends/requests', authMiddleware, (req, res) => {
+    res.json(friends.getFriendRequests(req.username));
+});
+
+app.post('/api/friends/request/:username', authMiddleware, (req, res) => {
+    const result = friends.sendRequest(req.username, req.params.username);
+    if (result.ok) res.json({ ok: true });
+    else res.status(400).json({ error: result.error });
+});
+
+app.post('/api/friends/accept/:username', authMiddleware, (req, res) => {
+    const result = friends.acceptRequest(req.username, req.params.username);
+    if (result.ok) res.json({ ok: true });
+    else res.status(400).json({ error: result.error });
+});
+
+app.post('/api/friends/reject/:username', authMiddleware, (req, res) => {
+    const result = friends.rejectRequest(req.username, req.params.username);
+    if (result.ok) res.json({ ok: true });
+    else res.status(400).json({ error: result.error });
+});
+
+app.delete('/api/friends/:username', authMiddleware, (req, res) => {
+    const result = friends.removeFriend(req.username, req.params.username);
+    if (result.ok) res.json({ ok: true });
+    else res.status(400).json({ error: result.error });
+});
+
+app.post('/api/friends/block/:username', authMiddleware, (req, res) => {
+    const result = friends.blockUser(req.username, req.params.username);
+    if (result.ok) res.json({ ok: true });
+    else res.status(400).json({ error: result.error });
+});
+
+app.get('/api/users/search', authMiddleware, (req, res) => {
+    const q = req.query.q || '';
+    res.json(friends.searchUsers(q));
 });
 
 // HTTP server

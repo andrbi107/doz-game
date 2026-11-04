@@ -265,6 +265,68 @@ const Online = (function () {
         socket.emit('chat:emote', { roomId, emote });
     }
 
+    /* ---------- Friends (v5) ---------- */
+
+    async function apiGet(path) {
+        const resp = await fetch(getServerUrl() + path, {
+            headers: { 'Authorization': 'Bearer ' + token },
+        });
+        if (!resp.ok) throw new Error((await resp.json()).error || 'Request failed');
+        return resp.json();
+    }
+
+    async function apiPost(path, method = 'POST') {
+        const resp = await fetch(getServerUrl() + path, {
+            method,
+            headers: { 'Authorization': 'Bearer ' + token },
+        });
+        if (!resp.ok) throw new Error((await resp.json()).error || 'Request failed');
+        return resp.json();
+    }
+
+    async function getFriends() {
+        return apiGet('/api/friends');
+    }
+
+    async function getFriendRequests() {
+        return apiGet('/api/friends/requests');
+    }
+
+    async function sendFriendRequest(username) {
+        return apiPost('/api/friends/request/' + encodeURIComponent(username));
+    }
+
+    async function acceptFriendRequest(username) {
+        return apiPost('/api/friends/accept/' + encodeURIComponent(username));
+    }
+
+    async function rejectFriendRequest(username) {
+        return apiPost('/api/friends/reject/' + encodeURIComponent(username));
+    }
+
+    async function removeFriend(username) {
+        return apiPost('/api/friends/' + encodeURIComponent(username), 'DELETE');
+    }
+
+    async function blockUser(username) {
+        return apiPost('/api/friends/block/' + encodeURIComponent(username));
+    }
+
+    async function searchUsers(query) {
+        return apiGet('/api/users/search?q=' + encodeURIComponent(query));
+    }
+
+    async function getLeaderboard() {
+        const resp = await fetch(getServerUrl() + '/api/leaderboard');
+        return resp.json();
+    }
+
+    async function getProfile(username) {
+        const resp = await fetch(getServerUrl() + '/api/profile/' + encodeURIComponent(username));
+        if (!resp.ok) throw new Error('کاربر یافت نشد');
+        return resp.json();
+    }
+
     /* ---------- Set handlers ---------- */
 
     function on(event, handler) {
@@ -287,6 +349,17 @@ const Online = (function () {
         resign,
         requestRematch,
         sendEmote,
+        // Friends (v5)
+        getFriends,
+        getFriendRequests,
+        sendFriendRequest,
+        acceptFriendRequest,
+        rejectFriendRequest,
+        removeFriend,
+        blockUser,
+        searchUsers,
+        getLeaderboard,
+        getProfile,
         on,
         getServerUrl,
         setServerUrl,

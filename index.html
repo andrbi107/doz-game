@@ -60,6 +60,17 @@
                         <span class="badge" id="onlinePlayersBadge" style="display:none;background:#fff;color:#10b981">۰</span>
                     </button>
                     <div class="menu-row">
+                        <button class="btn btn-secondary" data-action="go-friends">
+                            <span class="btn-icon">👥</span>
+                            <span class="btn-text">دوستان</span>
+                            <span class="badge" id="friendRequestsMenuBadge" style="display:none">۰</span>
+                        </button>
+                        <button class="btn btn-secondary" data-action="go-leaderboard">
+                            <span class="btn-icon">🏆</span>
+                            <span class="btn-text">برترین‌ها</span>
+                        </button>
+                    </div>
+                    <div class="menu-row">
                         <button class="btn btn-secondary" data-action="go-stats">
                             <span class="btn-icon">📊</span>
                             <span class="btn-text">آمار</span>
@@ -101,7 +112,7 @@
                 </div>
 
                 <div class="home-footer">
-                    <span class="version"><bdi>نسخه ۴.۰.۰</bdi></span>
+                    <span class="version"><bdi>نسخه ۵.۰.۰</bdi></span>
                     <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم" title="تغییر تم">
                         <span class="theme-icon-light">☀</span>
                         <span class="theme-icon-dark">☾</span>
@@ -905,6 +916,80 @@ p>
 
             <!-- Floating emote display -->
             <div class="emote-display" id="emoteDisplay"></div>
+        </section>
+
+        <!-- ============ FRIENDS SCREEN ============ -->
+        <section class="screen" id="friendsScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">دوستان</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="friends-container">
+                <div class="friends-tabs">
+                    <button class="friends-tab active" data-tab="friends">دوستان</button>
+                    <button class="friends-tab" data-tab="requests">درخواست‌ها <span class="badge" id="friendRequestsBadge" style="display:none">۰</span></button>
+                    <button class="friends-tab" data-tab="search">جستجو</button>
+                </div>
+
+                <!-- Friends list -->
+                <div class="friends-tab-content active" id="friendsListContent">
+                    <div id="friendsList" class="friends-list">
+                        <p class="empty-state">هنوز دوستی ندارید</p>
+                    </div>
+                </div>
+
+                <!-- Requests -->
+                <div class="friends-tab-content" id="friendsRequestsContent">
+                    <div id="friendRequestsList" class="friends-list">
+                        <p class="empty-state">درخواستی وجود ندارد</p>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="friends-tab-content" id="friendsSearchContent">
+                    <div class="friends-search-box">
+                        <input type="text" class="form-input" id="friendSearchInput" placeholder="نام کاربری را وارد کنید...">
+                        <button class="btn btn-primary" data-action="search-users">جستجو</button>
+                    </div>
+                    <div id="userSearchResults" class="friends-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ PROFILE SCREEN ============ -->
+        <section class="screen" id="profileScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">پروفایل</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="profile-container" id="profileContainer">
+                <!-- Will be filled dynamically -->
+            </div>
+        </section>
+
+        <!-- ============ LEADERBOARD SCREEN ============ -->
+        <section class="screen" id="leaderboardScreen">
+            <div class="screen-header">
+                <button class="btn-icon-back" data-action="go-home" aria-label="بازگشت">
+                    <span>→</span>
+                </button>
+                <h2 class="screen-title">جدول برترین‌ها</h2>
+                <div class="header-spacer"></div>
+            </div>
+
+            <div class="leaderboard-container">
+                <div id="globalLeaderboard" class="leaderboard-list">
+                    <p class="empty-state">برای مشاهده جدول برترین‌ها وارد شوید</p>
+                </div>
+            </div>
         </section>
 
     </div>

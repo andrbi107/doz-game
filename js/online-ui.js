@@ -484,6 +484,275 @@ const OnlineUI = (function () {
         return String(n).replace(/\d/g, d => map[parseInt(d, 10)]);
     }
 
+    /* ---------- Friends screen (v5) ---------- */
+
+    async function showFriendsScreen() {
+        UI.showScreen('friends');
+        if (!Online.isLoggedIn()) {
+            if (UI && UI.toast) UI.toast('برای مشاهده دوستان وارد شوید');
+            return;
+        }
+        await refreshFriends();
+        await refreshFriendRequests();
+    }
+
+    async function refreshFriends() {
+        const list = $('#friendsList');
+        if (!list) return;
+        list.innerHTML = '<p class="empty-state">در حال بارگذاری...</p>';
+        try {
+            const friends = await Online.getFriends();
+            if (friends.length === 0) {
+                list.innerHTML = '<p class="empty-state">هنوز دوستی ندارید. از تب جستجو استفاده کنید.</p>';
+                return;
+            }
+            list.innerHTML = '';
+            friends.forEach(f => {
+                const card = document.createElement('div');
+                card.className = 'friend-card';
+                card.innerHTML = `
+                    <div class="friend-avatar">👤</div>
+                    <div class="friend-info">
+                        <div class="friend-name">${escapeHtml(f.username)}</div>
+                        <div class="friend-stats">${toPersianDigits(f.elo)} ELO · ${toPersianDigits(f.wins)} برد</div>
+                    </div>
+                    <div class="friend-actions">
+                        <button class="btn btn-ghost btn-sm" data-action="view-profile" data-username="${escapeHtml(f.username)}">پروفایل</button>
+                        <button class="btn btn-danger btn-sm" data-action="remove-friend" data-username="${escapeHtml(f.username)}">حذف</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        } catch (e) {
+            list.innerHTML = '<p class="empty-state">خطا در بارگذاری</p>';
+        }
+    }
+
+    async function refreshFriendRequests() {
+        const list = $('#friendRequestsList');
+        const badge = $('#friendRequestsBadge');
+        const menuBadge = $('#friendRequestsMenuBadge');
+        if (!list) return;
+        try {
+            const requests = await Online.getFriendRequests();
+            // Update badges
+            if (requests.length > 0) {
+                if (badge) { badge.style.display = 'inline-block'; badge.textContent = toPersianDigits(requests.length); }
+                if (menuBadge) { menuBadge.style.display = 'inline-block'; menuBadge.textContent = toPersianDigits(requests.length); }
+            } else {
+                if (badge) badge.style.display = 'none';
+                if (menuBadge) menuBadge.style.display = 'none';
+            }
+            if (requests.length === 0) {
+                list.innerHTML = '<p class="empty-state">درخواستی وجود ندارد</p>';
+                return;
+            }
+            list.innerHTML = '';
+            requests.forEach(r => {
+                const card = document.createElement('div');
+                card.className = 'friend-card';
+                card.innerHTML = `
+                    <div class="friend-avatar">👤</div>
+                    <div class="friend-info">
+                        <div class="friend-name">${escapeHtml(r.from)}</div>
+                        <div class="friend-stats">${toPersianDigits(r.elo)} ELO</div>
+                    </div>
+                    <div class="friend-actions">
+                        <button class="btn btn-primary btn-sm" data-action="accept-friend" data-username="${escapeHtml(r.from)}">پذیرفتن</button>
+                        <button class="btn btn-ghost btn-sm" data-action="reject-friend" data-username="${escapeHtml(r.from)}">رد</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        } catch (e) {
+            list.innerHTML = '<p class="empty-state">خطا در بارگذاری</p>';
+        }
+    }
+
+    async function searchUsers() {
+        const input = $('#friendSearchInput');
+        const results = $('#userSearchResults');
+        if (!input || !results) return;
+        const q = input.value.trim();
+        if (q.length < 2) {
+            if (UI && UI.toast) UI.toast('حداقل ۲ کاراکتر وارد کنید');
+            return;
+        }
+        results.innerHTML = '<p class="empty-state">در حال جستجو...</p>';
+        try {
+            const users = await Online.searchUsers(q);
+            if (users.length === 0) {
+                results.innerHTML = '<p class="empty-state">کاربری یافت نشد</p>';
+                return;
+            }
+            results.innerHTML = '';
+            users.forEach(u => {
+                const card = document.createElement('div');
+                card.className = 'friend-card';
+                card.innerHTML = `
+                    <div class="friend-avatar">👤</div>
+                    <div class="friend-info">
+                        <div class="friend-name">${escapeHtml(u.username)}</div>
+                        <div class="friend-stats">${toPersianDigits(u.elo)} ELO · ${toPersianDigits(u.wins)} برد</div>
+                    </div>
+                    <div class="friend-actions">
+                        <button class="btn btn-primary btn-sm" data-action="add-friend" data-username="${escapeHtml(u.username)}">دعوت</button>
+                        <button class="btn btn-ghost btn-sm" data-action="view-profile" data-username="${escapeHtml(u.username)}">پروفایل</button>
+                    </div>
+                `;
+                results.appendChild(card);
+            });
+        } catch (e) {
+            results.innerHTML = '<p class="empty-state">خطا در جستجو</p>';
+        }
+    }
+
+    async function addFriend(username) {
+        try {
+            await Online.sendFriendRequest(username);
+            if (UI && UI.toast) UI.toast(`درخواست دوستی به ${username} ارسال شد`);
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
+    async function acceptFriend(username) {
+        try {
+            await Online.acceptFriendRequest(username);
+            if (UI && UI.toast) UI.toast(`${username} به دوستان اضافه شد`);
+            await refreshFriends();
+            await refreshFriendRequests();
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
+    async function rejectFriend(username) {
+        try {
+            await Online.rejectFriendRequest(username);
+            await refreshFriendRequests();
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
+    async function removeFriend(username) {
+        if (!confirm(`حذف ${username} از دوستان؟`)) return;
+        try {
+            await Online.removeFriend(username);
+            if (UI && UI.toast) UI.toast(`${username} حذف شد`);
+            await refreshFriends();
+        } catch (e) {
+            if (UI && UI.toast) UI.toast(e.message);
+        }
+    }
+
+    function switchFriendsTab(tab) {
+        $$('.friends-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+        $$('.friends-tab-content').forEach(c => c.classList.remove('active'));
+        if (tab === 'friends') $('#friendsListContent').classList.add('active');
+        else if (tab === 'requests') $('#friendsRequestsContent').classList.add('active');
+        else if (tab === 'search') $('#friendsSearchContent').classList.add('active');
+    }
+
+    /* ---------- Profile screen (v5) ---------- */
+
+    async function showProfile(username) {
+        UI.showScreen('profile');
+        const container = $('#profileContainer');
+        if (!container) return;
+        container.innerHTML = '<p class="empty-state">در حال بارگذاری...</p>';
+        try {
+            const profile = await Online.getProfile(username);
+            const tiers = [
+                { min: 2400, icon: '💎', name: 'الماس' },
+                { min: 2000, icon: '🥈', name: 'پلاتین' },
+                { min: 1700, icon: '🥇', name: 'طلایی' },
+                { min: 1400, icon: '⚪', name: 'نقره‌ای' },
+                { min: 0, icon: '🥉', name: 'برنزی' },
+            ];
+            const tier = tiers.find(t => profile.elo >= t.min);
+            const total = profile.wins + profile.losses + profile.draws;
+            const winRate = total > 0 ? Math.round(profile.wins / total * 100) : 0;
+            const me = Online.getUser();
+            const isMe = me && me.username === username;
+            container.innerHTML = `
+                <div class="profile-header">
+                    <div class="profile-avatar-large">${tier.icon}</div>
+                    <div class="profile-name">${escapeHtml(profile.username)}</div>
+                    <div class="profile-tier">${tier.icon} ${tier.name} · ${toPersianDigits(profile.elo)} ELO</div>
+                </div>
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-tile">
+                        <div class="profile-stat-value">${toPersianDigits(profile.wins)}</div>
+                        <div class="profile-stat-label">برد</div>
+                    </div>
+                    <div class="profile-stat-tile">
+                        <div class="profile-stat-value">${toPersianDigits(profile.losses)}</div>
+                        <div class="profile-stat-label">باخت</div>
+                    </div>
+                    <div class="profile-stat-tile">
+                        <div class="profile-stat-value">${toPersianDigits(profile.draws)}</div>
+                        <div class="profile-stat-label">مساوی</div>
+                    </div>
+                    <div class="profile-stat-tile">
+                        <div class="profile-stat-value">${toPersianDigits(winRate)}٪</div>
+                        <div class="profile-stat-label">درصد برد</div>
+                    </div>
+                </div>
+                ${!isMe ? `
+                    <div class="profile-actions">
+                        <button class="btn btn-primary" data-action="add-friend" data-username="${escapeHtml(profile.username)}">➕ افزودن به دوستان</button>
+                        <button class="btn btn-ghost" data-action="go-friends">بازگشت</button>
+                    </div>
+                ` : ''}
+            `;
+        } catch (e) {
+            container.innerHTML = '<p class="empty-state">کاربر یافت نشد</p>';
+        }
+    }
+
+    /* ---------- Leaderboard (v5) ---------- */
+
+    async function showLeaderboard() {
+        UI.showScreen('leaderboard');
+        const list = $('#globalLeaderboard');
+        if (!list) return;
+        list.innerHTML = '<p class="empty-state">در حال بارگذاری...</p>';
+        try {
+            const board = await Online.getLeaderboard();
+            if (!board || board.length === 0) {
+                list.innerHTML = '<p class="empty-state">هنوز بازیکنی ثبت نشده</p>';
+                return;
+            }
+            const me = Online.getUser();
+            list.innerHTML = '';
+            board.forEach((u, i) => {
+                const row = document.createElement('div');
+                const isMe = me && me.username === u.username;
+                row.className = 'leaderboard-row' + (isMe ? ' is-me' : '');
+                row.dataset.username = u.username;
+                row.innerHTML = `
+                    <div class="leaderboard-rank">${toPersianDigits(i + 1)}</div>
+                    <div class="leaderboard-name">${escapeHtml(u.username)}${isMe ? ' (شما)' : ''}</div>
+                    <div class="leaderboard-score">${toPersianDigits(u.elo)} ELO · ${toPersianDigits(u.wins)} برد</div>
+                `;
+                row.addEventListener('click', () => showProfile(u.username));
+                list.appendChild(row);
+            });
+        } catch (e) {
+            list.innerHTML = '<p class="empty-state">برای مشاهده جدول برترین‌ها وارد شوید</p>';
+        }
+    }
+
+    /* ---------- Helpers ---------- */
+    function escapeHtml(s) {
+        if (s == null) return '';
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     return {
         init,
         showAuth,
@@ -500,5 +769,17 @@ const OnlineUI = (function () {
         quitOnlineGame,
         resignOnline,
         refreshOnlineUI,
+        // v5
+        showFriendsScreen,
+        refreshFriends,
+        refreshFriendRequests,
+        searchUsers,
+        addFriend,
+        acceptFriend,
+        rejectFriend,
+        removeFriend,
+        switchFriendsTab,
+        showProfile,
+        showLeaderboard,
     };
 })();

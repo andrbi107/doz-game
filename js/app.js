@@ -379,6 +379,21 @@
             });
         }
 
+        // Friends tabs (v5)
+        document.querySelectorAll('.friends-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                OnlineUI.switchFriendsTab(tab.dataset.tab);
+            });
+        });
+
+        // Friend search Enter key
+        const friendSearchInput = document.querySelector('#friendSearchInput');
+        if (friendSearchInput) {
+            friendSearchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') OnlineUI.searchUsers();
+            });
+        }
+
         // Save state on page hide (for auto-resume)
         window.addEventListener('beforeunload', saveCurrentGameState);
         document.addEventListener('visibilitychange', () => {
@@ -432,6 +447,16 @@
             case 'confirm-join-private': OnlineUI.confirmJoinPrivate(); break;
             case 'quit-online-game':  OnlineUI.quitOnlineGame(); break;
             case 'resign-online':     OnlineUI.resignOnline(); break;
+
+            // Friends & Profile (v5)
+            case 'go-friends':        OnlineUI.showFriendsScreen(); break;
+            case 'go-leaderboard':    OnlineUI.showLeaderboard(); break;
+            case 'search-users':      OnlineUI.searchUsers(); break;
+            case 'add-friend':        OnlineUI.addFriend(target.dataset.username); break;
+            case 'accept-friend':     OnlineUI.acceptFriend(target.dataset.username); break;
+            case 'reject-friend':     OnlineUI.rejectFriend(target.dataset.username); break;
+            case 'remove-friend':     OnlineUI.removeFriend(target.dataset.username); break;
+            case 'view-profile':      OnlineUI.showProfile(target.dataset.username); break;
 
             case 'undo-move':     undoMove(); break;
             case 'toggle-sound':  toggleSound(); break;
