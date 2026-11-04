@@ -167,19 +167,129 @@ const AI = (function () {
     }
 
     /**
+     * Choose a move for a board of any size (v3).
+     * For 3x3, uses the optimized minimax. For larger boards, uses heuristic.
+     */
+    function chooseMoveWithSize(board, player, difficulty, size = 3, winLength = 3) {
+        if (size === 3) {
+            return chooseMove(board, player, difficulty);
+        }
+        // For larger boards, use heuristic-based AI
+        return heuristicMove(board, player, size, winLength, difficulty);
+    }
+
+    /**
+     * Heuristic-based AI for larger boards (4x4, 5x5).
+     * - Check immediate win
+     * - Block immediate threat
+     * - Score moves based on position value
+     */
+    function heuristicMove(board, player, size, winLength, difficulty) {
+        const empties = Game_.getEmptyCells(board);
+        if (empties.length === 0) return -1;
+
+        const opp = opponent(player);
+        const center = Math.floor(size / 2);
+
+        // Easy: 50% random
+        if (difficulty === 'easy' && Math.random() < 0.5) {
+            return empties[Math.floor(Math.random() * empties.length)];
+        }
+
+        // 1. Win immediately if possible
+        const win = findCriticalMoveSized(board, player, size, winLength);
+        if (win !== -1) return win;
+
+        // 2. Block opponent's immediate win
+        const block = findCriticalMoveSized(board, opp, size, winLength);
+        if (block !== -1) return block;
+
+        // 3. Score each empty cell
+        let bestScore = -Infinity;
+        let bestMoves = [];
+        for (const idx of empties) {
+            const r = Math.floor(idx / size);
+            const c = idx % size;
+            let score = 0;
+            // Prefer center
+            const distFromCenter = Math.abs(r - center) + Math.abs(c - center);
+            score += (size - distFromCenter) * 2;
+            // Bonus for corners
+            if ((r === 0 || r === size - 1) && (c === 0 || c === size - 1)) {
+                score += 3;
+            }
+            // Bonus for cells near existing marks
+            score += countAdjacentMatches(board, idx, player, size) * 4;
+            score += countAdjacentMatches(board, idx, opp, size) * 2; // also good for blocking
+
+            // Add some randomness for non-hard
+            if (difficulty !== 'hard') {
+                score += Math.random() * 5;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMoves = [idx];
+            } else if (score === bestScore) {
+                bestMoves.push(idx);
+            }
+        }
+        return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    }
+
+    /**
+     * Find a critical move (win or block) for any board size.
+     */
+    function findCriticalMoveSized(board, player, size, winLength) {
+        const empties = Game_.getEmptyCells(board);
+        for (const idx of empties) {
+            const trial = board.slice();
+            trial[idx] = player;
+            const r = Game_.checkWinner(trial, size, winLength);
+            if (r.winner === player) return idx;
+        }
+        return -1;
+    }
+
+    /**
+     * Count how many of the player's marks are adjacent to a cell.
+     */
+    function countAdjacentMatches(board, idx, player, size) {
+        const r = Math.floor(idx / size);
+        const c = idx % size;
+        let count = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+                    if (board[nr * size + nc] === player) count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
      * Get a hint for the human (uses hard AI on their behalf).
      */
-    function getHint(board, player) {
-        return hardMove(board, player);
+    function getHint(board, player, size = 3, winLength = 3) {
+        if (size === 3) {
+            return hardMove(board, player);
+        }
+        return heuristicMove(board, player, size, winLength, 'hard');
     }
 
     return {
         chooseMove,
+        chooseMoveWithSize,
         getHint,
         // exposed for tests
         _minimax: minimax,
         _easyMove: easyMove,
         _mediumMove: mediumMove,
         _hardMove: hardMove,
+        _heuristicMove: heuristicMove,
     };
 })();

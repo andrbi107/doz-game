@@ -647,3 +647,167 @@ body.high-contrast .btn {
     padding: 6px 12px;
     font-size: 12px;
 }
+
+/* ============================================
+   v3 STYLES - XP bar, board variants, rarity
+   ============================================ */
+
+/* ---------- XP/Level bar (home screen) ---------- */
+.xp-bar-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 12px 14px;
+    backdrop-filter: blur(10px);
+}
+
+.xp-bar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.xp-level-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.xp-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.xp-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.xp-label strong {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.xp-value {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.xp-progress-bar {
+    background: var(--surface);
+    border-radius: 999px;
+    height: 6px;
+    overflow: hidden;
+}
+
+.xp-progress-fill {
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    height: 100%;
+    width: 0%;
+    transition: width var(--transition-slow);
+    border-radius: 999px;
+}
+
+/* ---------- Achievement rarity badges ---------- */
+.achievement-card[data-rarity="common"]    { border-color: rgba(148, 163, 184, 0.3); }
+.achievement-card[data-rarity="uncommon"]  { border-color: rgba(16, 185, 129, 0.3); }
+.achievement-card[data-rarity="rare"]      { border-color: rgba(59, 130, 246, 0.3); }
+.achievement-card[data-rarity="epic"]      { border-color: rgba(168, 85, 247, 0.3); }
+.achievement-card[data-rarity="legendary"] { border-color: rgba(245, 158, 11, 0.4); }
+.achievement-card[data-rarity="secret"]    { border-color: rgba(236, 72, 153, 0.4); }
+
+.achievement-card.unlocked[data-rarity="rare"]      { background: linear-gradient(135deg, var(--surface-elevated), rgba(59, 130, 246, 0.1)); }
+.achievement-card.unlocked[data-rarity="epic"]      { background: linear-gradient(135deg, var(--surface-elevated), rgba(168, 85, 247, 0.12)); }
+.achievement-card.unlocked[data-rarity="legendary"] { background: linear-gradient(135deg, var(--surface-elevated), rgba(245, 158, 11, 0.15)); }
+.achievement-card.unlocked[data-rarity="secret"]    { background: linear-gradient(135deg, var(--surface-elevated), rgba(236, 72, 153, 0.12)); }
+
+.achievement-rarity {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 999px;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rarity-common    { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+.rarity-uncommon  { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.rarity-rare      { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.rarity-epic      { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.rarity-legendary { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.rarity-secret    { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+
+/* Rarity filter chips */
+.rarity-filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.rarity-chip {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.rarity-chip:hover { background: var(--surface-hover); }
+.rarity-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ---------- Board size variants ---------- */
+.board.size-4 {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+}
+
+.board.size-5 {
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+}
+
+.board.size-4 .cell,
+.board.size-5 .cell {
+    font-size: clamp(28px, 8vw, 44px);
+}
+
+.board.size-5 .cell .cell-number {
+    font-size: 9px;
+}
+
+/* ---------- Modal actions 3-button layout ---------- */
+.modal-actions {
+    flex-wrap: wrap;
+}
+
+.modal-actions .btn-ghost {
+    flex: 0 0 100%;
+    order: -1;
+    margin-bottom: 4px;
+}
+
+/* ---------- Quick rematch button (round end modal) ---------- */
+.modal-actions .btn-primary {
+    flex: 2;
+}

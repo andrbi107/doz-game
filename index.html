@@ -81,8 +81,22 @@
                     </button>
                 </div>
 
+                <!-- XP/Level bar (v3) -->
+                <div class="xp-bar-card" id="xpBarCard">
+                    <div class="xp-bar-header">
+                        <span class="xp-level-badge" id="xpLevelBadge">۱</span>
+                        <span class="xp-info">
+                            <span class="xp-label">لول <strong id="xpLevel">۱</strong></span>
+                            <span class="xp-value"><span id="xpCurrent">۰</span> / <span id="xpNext">۱۰۰۰</span> XP</span>
+                        </span>
+                    </div>
+                    <div class="xp-progress-bar">
+                        <div class="xp-progress-fill" id="xpProgressFill"></div>
+                    </div>
+                </div>
+
                 <div class="home-footer">
-                    <span class="version"><bdi>نسخه ۲.۰.۰</bdi></span>
+                    <span class="version"><bdi>نسخه ۳.۰.۰</bdi></span>
                     <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم" title="تغییر تم">
                         <span class="theme-icon-light">☀</span>
                         <span class="theme-icon-dark">☾</span>
@@ -195,6 +209,15 @@
                             <button class="seg-btn" data-value="10">۱۰ث</button>
                             <button class="seg-btn" data-value="15">۱۵ث</button>
                             <button class="seg-btn" data-value="30">۳۰ث</button>
+                        </div>
+                    </div>
+
+                    <div class="option-row" id="boardSizeRow">
+                        <label class="option-label">اندازه بورد</label>
+                        <div class="segmented-control" id="boardSizeControl">
+                            <button class="seg-btn active" data-value="3">۳×۳</button>
+                            <button class="seg-btn" data-value="4">۴×۴</button>
+                            <button class="seg-btn" data-value="5">۵×۵</button>
                         </div>
                     </div>
                 </div>
@@ -331,6 +354,7 @@
                 <div class="modal-stats" id="matchEndStats"></div>
                 <div class="modal-actions">
                     <button class="btn btn-secondary" data-action="go-home">منوی اصلی</button>
+                    <button class="btn btn-ghost" data-action="share-replay">🔗 اشتراک‌گذاری</button>
                     <button class="btn btn-primary" data-action="rematch">بازی دوباره</button>
                 </div>
             </div>

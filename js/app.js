@@ -17,6 +17,7 @@
         winTarget: 1,
         starter: 'random',
         moveTimerSeconds: 0,
+        boardSize: 3,             // 3, 4, or 5 (v3)
 
         board: Game.emptyBoard(),
         currentPlayer: 'x',
@@ -28,6 +29,11 @@
         seriesDraws: 0,
         roundNumber: 1,
         seriesStarter: 'x',
+
+        // Per-round tracking (v3)
+        usedUndo: false,
+        usedHint: false,
+        firstMove: undefined,     // first move index of the round
     };
 
     let settings = Storage.getSettings();
@@ -99,6 +105,11 @@
 
         // Update achievement badge on home
         updateAchievementBadge();
+        // Update XP bar on home
+        updateXpBar();
+
+        // Check for shared replay in URL (v3)
+        checkSharedReplay();
 
         // Enable replay button if there's a saved game
         if (Replay.hasReplay()) {
@@ -165,6 +176,10 @@
         deferredInstallPrompt.userChoice.then(choice => {
             if (choice.outcome === 'accepted') {
                 UI.toast('بازی نصب شد! 🎉');
+                Storage.setStat('pwaInstalled', true);
+                const stats = Storage.getStats();
+                Achievements.checkAll(stats, {});
+                updateAchievementBadge();
             }
             deferredInstallPrompt = null;
             const banner = document.querySelector('.install-banner');
@@ -215,6 +230,12 @@
             Audio.click();
         });
 
+        // Board size control (v3)
+        bindSegmented(UI.els.boardSizeControl, (value) => {
+            state.boardSize = parseInt(value, 10);
+            Audio.click();
+        });
+
         // Theme toggle (home)
         UI.els.themeToggle.addEventListener('click', () => {
             const cur = Storage.getSettings().theme;
@@ -232,6 +253,7 @@
                 state.avatars.x = emoji;
                 Storage.saveAvatars({ x: emoji });
                 UI.updateAvatars(emoji, state.avatars.o);
+                trackUiAction('avatar-changed');
                 setTimeout(() => UI.hideAvatarPicker(), 200);
             });
         });
@@ -241,6 +263,7 @@
                 state.avatars.o = emoji;
                 Storage.saveAvatars({ o: emoji });
                 UI.updateAvatars(state.avatars.x, emoji);
+                trackUiAction('avatar-changed');
                 setTimeout(() => UI.hideAvatarPicker(), 200);
             });
         });
@@ -262,6 +285,7 @@
             UI.applyAccentColor(color);
             UI.syncSettingsUI(settings);
             Audio.click();
+            trackUiAction('theme-changed');
         });
 
         // Settings: sound toggle
@@ -270,6 +294,7 @@
             Audio.setEnabled(e.target.checked);
             UI.setSoundButtonState(e.target.checked);
             if (e.target.checked) Audio.click();
+            trackUiAction('sound-toggled');
         });
 
         // Settings: volume
@@ -301,6 +326,7 @@
             settings = Storage.saveSettings({ colorBlindMode: e.target.checked });
             UI.applyColorBlindMode(e.target.checked);
             Audio.click();
+            trackUiAction('colorblind-toggled');
         });
 
         // Settings: high contrast
@@ -338,6 +364,16 @@
         document.addEventListener('click', unlock);
         document.addEventListener('keydown', unlock);
 
+        // Logo click easter egg (v3)
+        const logoIcon = document.querySelector('.logo-icon');
+        if (logoIcon) {
+            logoIcon.style.cursor = 'pointer';
+            logoIcon.addEventListener('click', () => {
+                trackLogoClick();
+                Audio.click();
+            });
+        }
+
         // Save state on page hide (for auto-resume)
         window.addEventListener('beforeunload', saveCurrentGameState);
         document.addEventListener('visibilitychange', () => {
@@ -363,7 +399,7 @@
             case 'go-mode-select': UI.showScreen('modeSelect'); Audio.click(); break;
             case 'go-stats':      showStats(); break;
             case 'go-settings':   UI.showScreen('settings'); Audio.click(); break;
-            case 'go-help':       UI.showScreen('help'); Audio.click(); break;
+            case 'go-help':       UI.showScreen('help'); Audio.click(); trackUiAction('help-read'); break;
             case 'go-achievements': showAchievements(); break;
             case 'go-replay':     showReplay(); break;
 
@@ -374,6 +410,7 @@
             case 'quit-game':     quitMatch(); break;
             case 'next-round':    nextRound(); break;
             case 'rematch':       rematch(); break;
+            case 'share-replay':  shareReplay(); break;
 
             case 'undo-move':     undoMove(); break;
             case 'toggle-sound':  toggleSound(); break;
@@ -407,6 +444,7 @@
         UI.showTimer(false);
         UI.showScreen('home');
         updateAchievementBadge();
+        updateXpBar();
         if (Replay.hasReplay()) UI.setReplayMenuEnabled(true);
     }
 
@@ -448,6 +486,10 @@
                 state.moveTimerSeconds = lastSetup.moveTimerSeconds;
                 UI.setSelectedTimer(lastSetup.moveTimerSeconds);
             }
+            if (lastSetup.boardSize !== undefined) {
+                state.boardSize = lastSetup.boardSize;
+                UI.setSelectedBoardSize(lastSetup.boardSize);
+            }
         } else {
             if (!UI.els.player1Name.value) UI.els.player1Name.value = 'بازیکن ۱';
             if (state.mode === 'pvp' && !UI.els.player2Name.value) {
@@ -473,6 +515,14 @@
         state.winTarget = UI.getSelectedWinTarget();
         state.starter = UI.getSelectedStarter();
         state.moveTimerSeconds = UI.getSelectedTimer();
+        // Get board size from UI (v3)
+        state.boardSize = UI.getSelectedBoardSize ? UI.getSelectedBoardSize() : 3;
+
+        // Track series/timer for achievements (v3)
+        if (state.moveTimerSeconds > 0) trackUiAction('timer-game');
+        if (state.winTarget === 3) trackUiAction('series-3');
+        else if (state.winTarget === 5) trackUiAction('series-5');
+        else if (state.winTarget === 7) trackUiAction('series-7');
 
         // Save last setup for quick replay
         settings = Storage.saveSettings({
@@ -484,6 +534,7 @@
                 winTarget: state.winTarget,
                 starter: state.starter,
                 moveTimerSeconds: state.moveTimerSeconds,
+                boardSize: state.boardSize,
             }
         });
 
@@ -526,10 +577,18 @@
     }
 
     function newRound(starter) {
-        state.board = Game.emptyBoard();
+        state.board = Game.emptyBoard(state.boardSize);
         state.moves = [];
         state.roundOver = false;
         state.currentPlayer = starter;
+        // Reset per-round tracking
+        state.usedUndo = false;
+        state.usedHint = false;
+        state.firstMove = undefined;
+
+        // Rebuild board DOM for the correct size (v3)
+        UI.setBoardSizeClass(state.boardSize);
+        rebuildBoardDom(state.boardSize);
 
         UI.clearWinningLine();
         UI.clearHints();
@@ -546,6 +605,35 @@
         if (state.moveTimerSeconds > 0 && !isAITurn(state.currentPlayer)) {
             startMoveTimerIfNeeded();
         }
+    }
+
+    /**
+     * Rebuild the board DOM cells for the given size (v3).
+     */
+    function rebuildBoardDom(size) {
+        const board = UI.els.board;
+        if (!board) return;
+        const total = size * size;
+        // Check if already correct
+        const currentCells = board.querySelectorAll('.cell');
+        if (currentCells.length === total) return;
+        // Clear and rebuild
+        board.innerHTML = '';
+        for (let i = 0; i < total; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.index = i;
+            board.appendChild(cell);
+        }
+        // Update UI.els.cells reference
+        UI.els.cells = Array.from(board.querySelectorAll('.cell'));
+    }
+
+    /**
+     * Get the win length for the current board size (v3).
+     */
+    function getWinLength() {
+        return Game.recommendedWinLength(state.boardSize);
     }
 
     function startMoveTimerIfNeeded() {
@@ -629,6 +717,72 @@
         UI.showTimer(false);
         Storage.clearGameState();
         UI.showScreen('home');
+        updateXpBar();
+    }
+
+    /**
+     * Share replay as a URL with encoded game data (v3).
+     */
+    function shareReplay() {
+        Audio.click();
+        const game = Storage.getLastGame();
+        if (!game) {
+            UI.toast('بازی‌ای برای اشتراک‌گذاری وجود ندارد');
+            return;
+        }
+        try {
+            // Encode game data as base64 URL parameter
+            const encoded = btoa(encodeURIComponent(JSON.stringify(game)));
+            const url = window.location.origin + window.location.pathname + '?replay=' + encoded;
+            // Copy to clipboard
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                    UI.toast('لینک بازپخش کپی شد!');
+                }).catch(() => {
+                    UI.toast('خطا در کپی. لینک در console است.');
+                    console.log('Replay URL:', url);
+                });
+            } else {
+                UI.toast('لینک در console است.');
+                console.log('Replay URL:', url);
+            }
+        } catch (e) {
+            UI.toast('خطا در ایجاد لینک');
+            console.error(e);
+        }
+    }
+
+    /**
+     * Update XP bar display (v3).
+     */
+    function updateXpBar() {
+        if (UI.updateXpBar) {
+            const xpProgress = Storage.getXpProgress();
+            UI.updateXpBar(xpProgress);
+        }
+    }
+
+    /**
+     * Check for shared replay in URL and load it (v3).
+     */
+    function checkSharedReplay() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const replayParam = params.get('replay');
+            if (!replayParam) return;
+            const decoded = JSON.parse(decodeURIComponent(atob(replayParam)));
+            if (decoded && decoded.moves) {
+                Storage.saveLastGame(decoded);
+                UI.setReplayMenuEnabled(true);
+                UI.toast('بازپخش اشتراک‌گذاری‌شده بارگذاری شد!');
+                // Clean URL
+                window.history.replaceState({}, '', window.location.pathname);
+                // Auto-open replay
+                setTimeout(() => showReplay(), 800);
+            }
+        } catch (e) {
+            console.warn('Failed to load shared replay', e);
+        }
     }
 
     /* ---------- Cell click (player move) ---------- */
@@ -649,6 +803,11 @@
         const next = Game.applyMove(state.board, index, player);
         if (!next) return;
 
+        // Track first move of the round
+        if (state.firstMove === undefined) {
+            state.firstMove = index;
+        }
+
         state.board = next;
         state.moves.push({
             player,
@@ -666,7 +825,7 @@
         // Save state for resume
         saveCurrentGameState();
 
-        const result = Game.checkWinner(state.board);
+        const result = Game.checkWinner(state.board, state.boardSize, getWinLength());
         if (result.winner) {
             finishRound(result);
             return;
@@ -708,7 +867,7 @@
         const delay = state.difficulty === 'easy' ? 400 : (state.difficulty === 'medium' ? 600 : 500);
         setTimeout(() => {
             try {
-                const move = AI.chooseMove(state.board, state.aiPlayer, state.difficulty);
+                const move = AI.chooseMoveWithSize(state.board, state.aiPlayer, state.difficulty, state.boardSize, getWinLength());
                 aiThinking = false;
                 UI.setBoardDisabled(false);
                 if (move >= 0) {
@@ -744,6 +903,8 @@
             mode: state.mode,
             difficulty: state.difficulty,
             winTarget: state.winTarget,
+            boardSize: state.boardSize,
+            winLength: getWinLength(),
             date: Date.now(),
         };
         Storage.saveLastGame(replayData);
@@ -775,12 +936,25 @@
                     mode: 'ai',
                     difficulty: state.difficulty,
                     moves: state.moves.length,
+                    line: result.line,
+                    firstMove: state.firstMove,
+                    usedUndo: state.usedUndo,
+                    usedHint: state.usedHint,
+                    boardSize: state.boardSize,
+                    humanPlayer,
                 });
                 if (humanWon) Audio.win();
                 else Audio.lose();
             } else {
-                Storage.recordGame('win', winnerName, { mode: 'pvp', moves: state.moves.length });
-                Storage.recordGame('loss', loserName, { mode: 'pvp', moves: state.moves.length });
+                Storage.recordGame('win', winnerName, {
+                    mode: 'pvp', moves: state.moves.length, line: result.line,
+                    firstMove: state.firstMove, usedUndo: state.usedUndo, usedHint: state.usedHint,
+                    boardSize: state.boardSize, humanPlayer: winner,
+                });
+                Storage.recordGame('loss', loserName, {
+                    mode: 'pvp', moves: state.moves.length,
+                    boardSize: state.boardSize, humanPlayer: loser,
+                });
                 Audio.win();
             }
             UI.vibrate([30, 40, 30]);
@@ -802,9 +976,13 @@
                     mode: 'ai',
                     difficulty: state.difficulty,
                     moves: state.moves.length,
+                    boardSize: state.boardSize,
+                    humanPlayer,
                 });
             } else {
-                Storage.recordGame('draw', state.playerNames.x, { mode: 'pvp', moves: state.moves.length });
+                Storage.recordGame('draw', state.playerNames.x, {
+                    mode: 'pvp', moves: state.moves.length, boardSize: state.boardSize,
+                });
             }
             Audio.draw();
             UI.vibrate(60);
@@ -881,6 +1059,11 @@
         if (state.roundOver) return;
         if (state.moves.length === 0) return;
 
+        // Mark undo as used (for achievements)
+        state.usedUndo = true;
+        // Track keyboard shortcut
+        trackKeyboardShortcut('undo');
+
         if (state.mode === 'ai') {
             if (state.currentPlayer !== state.aiPlayer) {
                 state.moves.pop();
@@ -892,7 +1075,7 @@
             state.moves.pop();
         }
 
-        state.board = Game.emptyBoard();
+        state.board = Game.emptyBoard(state.boardSize);
         state.moves.forEach(m => { state.board[m.index] = m.player; });
 
         // Determine current player: the one who didn't play the last remaining move
@@ -924,6 +1107,7 @@
         UI.syncSettingsUI(settings);
         if (next) Audio.click();
         UI.toast(next ? 'صدا روشن' : 'صدا خاموش');
+        trackUiAction('sound-toggled');
     }
 
     function toggleHints() {
@@ -936,8 +1120,20 @@
         UI.toast(next ? 'راهنما فعال شد' : 'راهنما غیرفعال شد');
 
         if (next && !state.roundOver && !aiThinking && !isAICurrent()) {
-            const hint = AI.getHint(state.board, state.currentPlayer);
-            if (hint >= 0) UI.showHint(hint);
+            showHintForCurrentPlayer();
+        }
+    }
+
+    /**
+     * Show hint for current player and mark hint as used (v3).
+     */
+    function showHintForCurrentPlayer() {
+        if (state.roundOver) return;
+        if (isAICurrent()) return;
+        const hint = AI.getHint(state.board, state.currentPlayer, state.boardSize, getWinLength());
+        if (hint >= 0) {
+            UI.showHint(hint);
+            state.usedHint = true;
         }
     }
 
@@ -977,6 +1173,10 @@
         URL.revokeObjectURL(url);
         UI.toast('فایل پشتیبان دانلود شد');
         Audio.click();
+        Storage.incrementStat('exportCount');
+        const stats = Storage.getStats();
+        Achievements.checkAll(stats, {});
+        updateAchievementBadge();
     }
 
     function handleImportFile(e) {
@@ -1001,6 +1201,9 @@
                     Audio.setVolume(settings.volume / 100);
                     showStats();
                     updateAchievementBadge();
+                    Storage.incrementStat('importCount');
+                    const stats = Storage.getStats();
+                    Achievements.checkAll(stats, {});
                 } else {
                     UI.toast('فایل نامعتبر است');
                 }
@@ -1047,9 +1250,11 @@
                 // Show winning line if there was one
                 const game = Replay.getReplay();
                 if (game && game.winner) {
-                    const finalBoard = Game.emptyBoard();
+                    const replaySize = game.boardSize || 3;
+                    const replayWinLength = Game.recommendedWinLength(replaySize);
+                    const finalBoard = Game.emptyBoard(replaySize);
                     game.moves.forEach(m => { finalBoard[m.index] = m.player; });
-                    const result = Game.checkWinner(finalBoard);
+                    const result = Game.checkWinner(finalBoard, replaySize, replayWinLength);
                     if (result.line) {
                         UI.highlightReplayWin(result.line, game.winner);
                     }
@@ -1159,6 +1364,7 @@
         state.winTarget = saved.winTarget;
         state.starter = saved.starter;
         state.moveTimerSeconds = saved.moveTimerSeconds || 0;
+        state.boardSize = saved.boardSize || 3;
         state.seriesXScore = saved.seriesXScore || 0;
         state.seriesOScore = saved.seriesOScore || 0;
         state.seriesDraws = saved.seriesDraws || 0;
@@ -1173,6 +1379,9 @@
         UI.updatePlayerNames(state.playerNames.x, state.playerNames.o);
         UI.updateAvatars(state.avatars.x, state.avatars.o);
         UI.updateScore(state.seriesXScore, state.seriesOScore, state.seriesDraws, state.roundNumber);
+        // Rebuild board for the correct size and render (v3)
+        UI.setBoardSizeClass(state.boardSize);
+        rebuildBoardDom(state.boardSize);
         UI.renderBoard(state.board);
         UI.renderHistory(state.moves);
         UI.setActivePlayer(state.currentPlayer);
@@ -1215,7 +1424,10 @@
 
         if (e.key >= '1' && e.key <= '9') {
             const idx = Game.labelToIndex(parseInt(e.key, 10));
-            if (idx !== undefined) handleCellClick(idx);
+            if (idx !== undefined) {
+                handleCellClick(idx);
+                trackKeyboardShortcut('number');
+            }
             return;
         }
 
@@ -1223,22 +1435,29 @@
             const num = parseInt(e.code.replace('Numpad', ''), 10);
             if (num >= 1 && num <= 9) {
                 const idx = Game.labelToIndex(num);
-                if (idx !== undefined) handleCellClick(idx);
+                if (idx !== undefined) {
+                    handleCellClick(idx);
+                    trackKeyboardShortcut('number');
+                }
             }
             return;
         }
 
         switch (e.key.toLowerCase()) {
-            case 'u': undoMove(); break;
-            case 'r': restartRound(); break;
+            case 'u':
+                undoMove();
+                trackKeyboardShortcut('undo');
+                break;
+            case 'r':
+                restartRound();
+                trackKeyboardShortcut('restart');
+                break;
             case 'escape': quitMatch(); break;
             case 'h':
                 if (!state.roundOver) {
-                    const hint = AI.getHint(state.board, state.currentPlayer);
-                    if (hint >= 0) {
-                        UI.showHint(hint);
-                        Audio.click();
-                    }
+                    showHintForCurrentPlayer();
+                    Audio.click();
+                    trackKeyboardShortcut('hint');
                 }
                 break;
         }
@@ -1253,6 +1472,69 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * Track keyboard shortcut usage for achievements (v3).
+     */
+    function trackKeyboardShortcut(name) {
+        const used = Storage.pushStatArray('keyboardShortcutsUsed', name, true, 20);
+        // Check for keyboard achievements
+        const stats = Storage.getStats();
+        Achievements.checkAll(stats, {});
+        updateAchievementBadge();
+    }
+
+    /**
+     * Track logo clicks for easter egg (v3).
+     */
+    function trackLogoClick() {
+        Storage.incrementStat('logoClicks');
+        const clicks = Storage.getStats().logoClicks;
+        if (clicks === 10) {
+            UI.toast('🔍 دستاورد کشف شد!');
+        }
+        const stats = Storage.getStats();
+        Achievements.checkAll(stats, {});
+        updateAchievementBadge();
+    }
+
+    /**
+     * Track UI interactions for achievements (v3).
+     */
+    function trackUiAction(action) {
+        switch (action) {
+            case 'help-read':
+                Storage.setStat('helpRead', true);
+                break;
+            case 'avatar-changed':
+                Storage.setStat('avatarChanged', true);
+                break;
+            case 'theme-changed':
+                Storage.setStat('themeChanged', true);
+                break;
+            case 'sound-toggled':
+                Storage.setStat('soundToggled', true);
+                break;
+            case 'colorblind-toggled':
+                Storage.setStat('colorBlindToggled', true);
+                break;
+            case 'timer-game':
+                Storage.incrementStat('timerGames');
+                break;
+            case 'series-3':
+                Storage.incrementStat('series3Games');
+                break;
+            case 'series-5':
+                Storage.incrementStat('series5Games');
+                break;
+            case 'series-7':
+                Storage.incrementStat('series7Games');
+                break;
+        }
+        const stats = Storage.getStats();
+        Achievements.checkAll(stats, {});
+        updateAchievementBadge();
     }
 
     /* ---------- Boot ---------- */

@@ -34,6 +34,15 @@ const UI = (function () {
         starterRow: $('#starterRow'),
         timerControl: $('#timerControl'),
         timerRow: $('#timerRow'),
+        boardSizeControl: $('#boardSizeControl'),
+        boardSizeRow: $('#boardSizeRow'),
+        // XP bar
+        xpBarCard: $('#xpBarCard'),
+        xpLevel: $('#xpLevel'),
+        xpLevelBadge: $('#xpLevelBadge'),
+        xpCurrent: $('#xpCurrent'),
+        xpNext: $('#xpNext'),
+        xpProgressFill: $('#xpProgressFill'),
         avatarXBtn: $('#avatarXBtn'),
         avatarOBtn: $('#avatarOBtn'),
         avatarX: $('#avatarX'),
@@ -494,12 +503,19 @@ const UI = (function () {
         els.achievementsGrid.innerHTML = '';
         allAchievements.forEach(a => {
             const card = document.createElement('div');
+            const rarity = a.rarity || 'common';
             card.className = 'achievement-card' + (a.unlocked ? ' unlocked' : '');
+            card.setAttribute('data-rarity', rarity);
             const dateStr = a.unlockedAt ? new Date(a.unlockedAt).toLocaleDateString('fa-IR') : '';
+            const rarityLabels = {
+                common: 'معمولی', uncommon: 'غیرمعمولی', rare: 'کمیاب',
+                epic: 'حماسی', legendary: 'افسانه‌ای', secret: 'رازدار',
+            };
             card.innerHTML = `
-                <div class="achievement-icon">${a.icon}</div>
-                <div class="achievement-title">${escapeHtml(a.title)}</div>
-                <div class="achievement-desc">${escapeHtml(a.description)}</div>
+                <div class="achievement-icon">${a.unlocked ? a.icon : '🔒'}</div>
+                <div class="achievement-title">${escapeHtml(a.unlocked ? a.title : '???')}</div>
+                <div class="achievement-desc">${a.unlocked ? escapeHtml(a.description) : 'دستاورد مخفی'}</div>
+                <span class="achievement-rarity rarity-${rarity}">${rarityLabels[rarity] || rarity}</span>
                 ${a.unlocked ? `<div class="achievement-date">${dateStr}</div>` : ''}
             `;
             els.achievementsGrid.appendChild(card);
@@ -695,6 +711,47 @@ const UI = (function () {
         });
     }
 
+    function getSelectedBoardSize() {
+        if (!els.boardSizeControl) return 3;
+        const active = $('#boardSizeControl .seg-btn.active');
+        return active ? parseInt(active.dataset.value, 10) : 3;
+    }
+
+    function setSelectedBoardSize(value) {
+        if (!els.boardSizeControl) return;
+        $$('#boardSizeControl .seg-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.value, 10) === value);
+        });
+    }
+
+    /**
+     * Update XP bar display (v3).
+     */
+    function updateXpBar(xpProgress) {
+        if (!els.xpBarCard) return;
+        const level = xpProgress.level || 1;
+        els.xpLevel.textContent = toPersianDigits(level);
+        els.xpLevelBadge.textContent = toPersianDigits(level);
+        els.xpCurrent.textContent = toPersianDigits(xpProgress.xpInLevel);
+        els.xpNext.textContent = toPersianDigits(xpProgress.xpForNext);
+        els.xpProgressFill.style.width = Math.max(0, Math.min(100, xpProgress.progress * 100)) + '%';
+    }
+
+    /**
+     * Render board with appropriate size class (v3).
+     */
+    function setBoardSizeClass(size) {
+        const board = els.board;
+        if (!board) return;
+        board.classList.remove('size-3', 'size-4', 'size-5');
+        board.classList.add('size-' + size);
+    }
+
+    function toPersianDigits(n) {
+        const map = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        return String(n).replace(/\d/g, d => map[parseInt(d, 10)]);
+    }
+
     function setAIPlayer2UI(isAI) {
         if (isAI) {
             els.player2Name.value = 'ربات';
@@ -788,6 +845,10 @@ const UI = (function () {
         setSelectedStarter,
         getSelectedTimer,
         setSelectedTimer,
+        getSelectedBoardSize,
+        setSelectedBoardSize,
+        updateXpBar,
+        setBoardSizeClass,
         setAIPlayer2UI,
         setSoundButtonState,
         setHintsButtonState,
