@@ -7,3 +7,6 @@ yarn-error.log*
 .env.*.local
 *.log
 .tmp/
+
+# DO NOT ignore package-lock.json (needed for reproducible installs)
+!package-lock.json
