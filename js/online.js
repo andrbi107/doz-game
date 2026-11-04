@@ -61,8 +61,9 @@ const Online = (function () {
      * Set the server URL.
      */
     function getServerUrl() {
-        // For production, replace with your server URL
-        return localStorage.getItem('doz.serverUrl') || 'http://localhost:3000';
+        // Default to Render.com production server
+        // Users can override in Settings → Server URL
+        return localStorage.getItem('doz.serverUrl') || 'https://doz-game-8z9h.onrender.com';
     }
 
     function setServerUrl(url) {
